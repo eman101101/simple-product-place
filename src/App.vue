@@ -75,8 +75,8 @@
       </div>
       <div v-if="searchPath.length === 0" class="no-path-found">No path found</div>
       <div class="highlighted-grid-buttons">
-        <button @mousedown="startZoomIn" @mouseup="stopZoom" @mouseleave="stopZoom" @touchstart="startZoomIn"@touchend="stopZoom">Zoom In</button>
-        <button @mousedown="startZoomOut" @mouseup="stopZoom" @mouseleave="stopZoom" @touchstart="startZoomIn"@touchend="stopZoom">
+        <button @mousedown="startZoomIn" @mouseup="stopZoom" @mouseleave="stopZoom">Zoom In</button>
+        <button @mousedown="startZoomOut" @mouseup="stopZoom" @mouseleave="stopZoom">
           Zoom Out
         </button>
 
@@ -124,19 +124,15 @@
         <button @click="addRowTop">+</button>
         <button :disabled="!canRemoveRowTop" @click="removeRowTop">-</button>
       </div>
-      <div @mousedown="onGridMouseDown" @touchstart="onGridMouseDown">
+      <div @mousedown="onGridMouseDown">
         <div class="grid-viewport">
           <div
             class="grid-container-wrapper"
             :style="wrapperTransform"
-            @mousedown="onMouseDown"
-            @mousemove.prevent="onMouseMove"
-            @mouseup="onMouseUp"
-            @touchstart="onMouseDown"
-            @touchmove="onMouseMove"
-            @touchend="onMouseUp"
-            @touchcancel="onMouseUp"
-            >
+            v-touch:start="onMouseDown"
+        v-touch:move="onMouseMove"
+        v-touch:end="onMouseUp"
+          >
             <div class="grid-container" :style="gridStyle">
               <div v-for="(row, rowIndex) in grid" :key="'row-' + rowIndex" class="grid-row">
                 <div
@@ -179,17 +175,10 @@
         </div>
         <div class="center-buttons">
           <button @click="centerGrid">Center Grid</button>
-          <button @mousedown="startZoomIn" @mouseup="stopZoom" @mouseleave="stopZoom"
-@touchstart="startZoomIn"
-@touchmove="stopZoom"
-@touchend="stopZoom"
->
+          <button @mousedown="startZoomIn" @mouseup="stopZoom" @mouseleave="stopZoom">
             Zoom In
           </button>
-          <button @mousedown="startZoomOut" @mouseup="stopZoom" @mouseleave="stopZoom"@touchstart="startZoomOut"
-@touchmove="stopZoom"
-@touchend="stopZoom"
->
+          <button @mousedown="startZoomOut" @mouseup="stopZoom" @mouseleave="stopZoom">
             Zoom Out
           </button>
         </div>
@@ -292,6 +281,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onBeforeUnmount } from 'vue'
+import Vue3TouchEvents from "vue3-touch-events";
 
 // Unique ID generator
 let uniqueId = 1

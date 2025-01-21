@@ -1,5 +1,6 @@
 <template>
-  <meta name="viewport" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, minimal-ui" />
+  <div >
   <!-- Invalid Drop Popup -->
 <div v-if="showInvalidDropPopup" class="modal">
   <div class="modal-content">
@@ -301,11 +302,18 @@
   </div>
     </div>
   </div>
+</div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import Vue3TouchEvents from 'vue3-touch-events'
 
+const handleTap = (e) => console.log('Tap:', e)
+const handleSwipe = (dir) => console.log('Swipe:', dir)
+const handleLongTap = (e) => console.log('Long tap:', e)
+const handleTouchStart = (e) => console.log('Touch start:', e)
+const handleTouchEnd = (e) => console.log('Touch end:', e)
 
 // Unique ID generator
 let uniqueId = 1
@@ -1166,6 +1174,13 @@ function onFileChange(e) {
 </script>
 
 <style scoped>
+
+* {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+#app{touch-action: none;}
 .app-message {
   background: #ffc107;
   color: #333;

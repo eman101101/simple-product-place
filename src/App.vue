@@ -1298,7 +1298,6 @@ function onFileChange(e) {
     width: 70px;
     height: 70px;
   }
-  .side-controls-left,
   .side-controls-right {
     display: none;
   }

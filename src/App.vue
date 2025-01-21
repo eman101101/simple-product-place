@@ -105,7 +105,7 @@
     <!-- Side Controls Left -->
     <div class="side-controls-left">
       <button @click="addColumnLeft">+</button>
-      <button :disabled="!canRemoveColumnLeft" @click="removeColumnLeft">-</button>
+      <button @click="removeColumnLeft">-</button>
     </div>
 
     <div>

@@ -129,9 +129,9 @@
           <div
             class="grid-container-wrapper"
             :style="wrapperTransform"
-            v-touch:start="onMouseDown"
-        v-touch:move="onMouseMove"
-        v-touch:end="onMouseUp"
+            @mousedown="onMouseDown"
+            @mousemove.prevent="onMouseMove"
+            @mouseup="onMouseUp"
           >
             <div class="grid-container" :style="gridStyle">
               <div v-for="(row, rowIndex) in grid" :key="'row-' + rowIndex" class="grid-row">
@@ -281,7 +281,6 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onBeforeUnmount } from 'vue'
-import Vue3TouchEvents from "vue3-touch-events";
 
 // Unique ID generator
 let uniqueId = 1
@@ -1469,6 +1468,7 @@ button:hover:not(:disabled) {
   justify-content: center;
   margin: 0 auto;
   padding: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .grid-row {

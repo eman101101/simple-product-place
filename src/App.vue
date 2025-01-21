@@ -23,7 +23,7 @@
       <h2>Search Results</h2>
       <ul v-if="searchResults.length">
         <li v-for="result in searchResults" :key="result.id" @click="selectSearchResult(result)">
-          {{ result.name }} (SKU: {{ result.sku }})
+          {{ result.name }} (UPC: {{ result.upc }})
         </li>
       </ul>
       <p v-else>No results found.</p>
@@ -35,18 +35,6 @@
     {{ appMessage }}
     <button @click="appMessage = ''">OK</button>
   </div>
-
-  <!-- Top Controls -->
-  <!-- Search -->
-
-  <!-- Hidden File Input -->
-  <input
-    type="file"
-    style="display: none"
-    ref="fileInput"
-    accept="application/json"
-    @change="onFileChange"
-  />
 
   <!-- Highlighted Grid Modal -->
 
@@ -100,7 +88,7 @@
 
   <!-- Grid Wrapper -->
   <div class="grid-wrapper">
-    <!-- Side Controls -->
+    <!-- Side Controls Left -->
     <div class="side-controls-left">
       <button @click="addColumnLeft">+</button>
       <button :disabled="!canRemoveColumnLeft" @click="removeColumnLeft">-</button>
@@ -115,7 +103,7 @@
         <input
           v-model="searchQuery"
           class="search-input"
-          placeholder="Search item or SKU"
+          placeholder="Search item or UPC"
           @keyup.enter="performSearch"
         />
         <button @click="performSearch">⌕</button>
@@ -133,9 +121,7 @@
             @mousemove.prevent="onMouseMove"
             @mouseup="onMouseUp"
             v-touch:start="onMouseDown"
-  v-touch:end="onMouseUp"
-            
-          >
+            v-touch:end="onMouseUp">
             <div class="grid-container" :style="gridStyle">
               <div v-for="(row, rowIndex) in grid" :key="'row-' + rowIndex" class="grid-row">
                 <div
@@ -194,10 +180,8 @@
 
     <!-- Right Column Controls -->
     <div class="side-controls-right">
-      <div class="control-group">
         <button @click="addColumnRight">+</button>
         <button :disabled="!canRemoveColumnRight" @click="removeColumnRight">-</button>
-      </div>
     </div>
   </div>
   <!-- Cubes below the grid area -->
@@ -213,7 +197,7 @@
     </div>
     <!-- Trash Icon -->
     <div class="trash" @dragover.prevent @drop="handleDropToTrash($event)">
-      <span class="trash-text">🗑️</span>
+      <span class="trash-text">Trash🗑️</span>
     </div>
   </div>
   <!-- Modal -->
@@ -227,14 +211,16 @@
         <h3>Grocery Items: {{ selectedCube.items.length }}</h3>
         <ul class="grocery-list">
           <li v-for="(item, idx) in selectedCube.items" :key="idx" class="grocery-item">
+            <button @click="removeGroceryItem(idx)" class="remove-item">X</button>
             <div class="item-name">
               <textarea v-model="item.name" placeholder="Item Name" rows="1"></textarea>
             </div>
+            
             <div class="item-details">
-              <input v-model="item.sku" placeholder="SKU" />
+              <input v-model="item.upc" placeholder="UPC" />
               <input v-model="item.row" placeholder="Row" />
             </div>
-            <button @click="removeGroceryItem(idx)" class="remove-item">✖️</button>
+            
           </li>
         </ul>
         <div class="item-controls">
@@ -245,7 +231,7 @@
           >
             +
           </button>
-          <button @click="openCamera" class="camera-button">📷</button>
+          <button @click="openCamera" class="camera-button">Open Camera</button>
         </div>
       </div>
 
@@ -294,8 +280,8 @@ const cubeTypes = [
   { type: 'Grocery', label: 'Grocery', class: 'Grocery', description: '...' },
   { type: 'Entry', label: 'Entry', class: 'Entry', description: '...' },
   { type: 'Custom', label: 'Custom', class: 'Custom', description: '...' },
-  { type: 'Wall', label: '🧱', class: 'Wall', description: '...' },
-  { type: 'Wall', label: '🪟', class: 'Wall', description: '...' },
+  { type: 'Wall', label: 'Wall 🧱', class: 'Wall', description: '...' },
+  { type: 'Wall', label: 'Window 🪟', class: 'Wall', description: '...' },
 ]
 
 // Grid state
@@ -319,7 +305,7 @@ function performSearch() {
     row.forEach((cube, colIndex) => {
       if (cube && cube.class === 'Grocery') {
         cube.items.forEach((item) => {
-          if (item.name.toLowerCase().includes(query) || item.sku.toLowerCase().includes(query)) {
+          if (item.name.toLowerCase().includes(query) || item.upc.toLowerCase().includes(query)) {
             searchResults.value.push({
               ...item,
               cubePosition: { row: rowIndex, col: colIndex },
@@ -879,7 +865,7 @@ function closeModal() {
 // Grocery items
 function addGroceryItem() {
   if (selectedCube.value.items.length >= 99) return
-  selectedCube.value.items.push({ name: '', sku: '', row: '' })
+  selectedCube.value.items.push({ name: '', upc: '', row: '' })
 }
 function removeGroceryItem(idx) {
   selectedCube.value.items.splice(idx, 1)
@@ -1087,6 +1073,7 @@ function onFileChange(e) {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  padding: 15px;
   z-index: 2;
 }
 
@@ -1097,6 +1084,7 @@ function onFileChange(e) {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  padding: 15px;
   z-index: 2;
 }
 
@@ -1234,7 +1222,7 @@ function onFileChange(e) {
   font-size: 1.2rem;
 }
 .grocery-list {
-  display: grid;
+  display: row;
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
   padding: 0;
@@ -1334,7 +1322,7 @@ function onFileChange(e) {
   padding: 5px;
 }
 
-.item-sku,
+.item-upc,
 .item-row {
   font-size: 0.9em;
   color: #666;
@@ -1354,12 +1342,11 @@ function onFileChange(e) {
 
 .grocery-item input {
   width: 80px;
-  margin-right: 10px;
 }
 
 .remove-item {
   background-color: #ff4d4d;
-  color: white;
+  color: rgb(255, 255, 255);
   border: none;
   border-radius: 50%;
   width: 24px;
@@ -1367,10 +1354,11 @@ function onFileChange(e) {
   font-size: 12px;
   cursor: pointer;
   transition: background-color 0.3s;
+  margin-left: auto;
 }
 
 .remove-item:hover {
-  background-color: #ff1a1a;
+  background-color: #0c0c0c;
 }
 
 .item-controls {
@@ -1381,7 +1369,7 @@ function onFileChange(e) {
 
 .add-item,
 .camera-button {
-  background-color: #4caf50;
+  background-color: #151815;
   color: white;
   border: none;
   padding: 5px 10px;
@@ -1420,24 +1408,11 @@ function onFileChange(e) {
   position: relative;
 }
 
-.control-group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 0 10px;
-}
-
 .side-controls {
   display: flex;
   flex-direction: row;
   align-items: center;
-}
-
-.left-controls,
-.right-controls {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  gap: 20px;
 }
 
 .bottom-pool {
@@ -1445,22 +1420,16 @@ function onFileChange(e) {
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
   padding: 1rem;
-  justify-content: center;
 }
 
 button {
-  width: 60px;
-  height: 40px;
-  margin: 5px;
-  font-size: 24px;
-  background-color: #2c3e50;
-  color: #ecf0f1;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition:
-    background-color 0.3s,
-    transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: fit-content;
+  padding: 8px 16px;
+  white-space: nowrap;
+  text-align: center;
 }
 
 button:disabled {
@@ -1480,7 +1449,6 @@ button:hover:not(:disabled) {
   justify-content: center;
   margin: 0 auto;
   padding: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .grid-row {
@@ -1676,7 +1644,7 @@ button:hover:not(:disabled) {
 }
 .trash-text {
   font-size: 1em;
-  color: #f7f7f7;
+  color: #f8f5f5;
 }
 
 .trash:hover {

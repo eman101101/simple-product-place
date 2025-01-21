@@ -64,7 +64,11 @@
               class="grid-cell"
               :class="{ highlighted: cell && cell.highlight }"
             >
-              <div v-if="cell !== null" class="cube" :class="cell.class.toLowerCase()" @dragend="onDragEnd">
+              <div v-if="cell !== null" class="cube" :class="cell.class.toLowerCase()"  draggable="true"
+  @dragstart="dragStart($event, rowIndex, colIndex)"
+  @touchstart="dragStart($event, rowIndex, colIndex)"
+  @click="openCubeModal(cell, rowIndex, colIndex)"
+  @touchend="handleDrop($event, rowIndex, colIndex)" @dragend="onDragEnd">
                 {{ cell.label }}
                 <span v-if="cell.step" class="step-number">{{ cell.step }}</span>
               </div>
@@ -167,6 +171,7 @@
                     :class="cell.class.toLowerCase()"
                     draggable="true"
                     @dragstart="dragStart($event, rowIndex, colIndex)"
+                    @touchstart="dragStart($event, rowIndex, colIndex)"
                     @click="openCubeModal(cell, rowIndex, colIndex)"
                     title="Click to edit cube"
                   >
@@ -211,11 +216,12 @@
       draggable="true"
       class="available-cube"
       @dragstart="dragStartFromPool($event, cubeType)"
+      @touchstart="dragStartFromPool($event, cubeType)"
     >
       {{ cubeType.label }}
     </div>
     <!-- Trash Icon -->
-    <div class="trash" @dragover.prevent @drop="handleDropToTrash($event)">
+    <div class="trash" @dragover.prevent @touchend="handleDropToTrash($event)" @drop="handleDropToTrash($event)">
       <span class="trash-text">Trash🗑️</span>
     </div>
   </div>
@@ -273,25 +279,26 @@
           placeholder="Enter new name"
         />
         <h3>Arrow Direction</h3>
-        <div class="direction-selector"></div>
-        <button
-          v-for="dir in [
-            '↑', // N
-            '↗', // NE
-            '→', // E
-            '↘', // SE
-            '↓', // S
-            '↙', // SW
-            '←', // W
-            '↖', // NW
-          ]"
-          :key="dir"
-          :class="{ active: selectedCube.label === dir }"
-          @click="selectedCube.label = dir"
-        >
-          {{ dir }}
-        </button>
-      </div>
+        <div class="direction-buttons">
+          <button
+            v-for="dir in [
+              '↑', // N
+              '↗', // NE
+              '→', // E
+              '↘', // SE
+              '↓', // S
+              '↙', // SW
+              '←', // W
+              '↖', // NW
+            ]"
+            :key="dir"
+            :class="{ active: selectedCube.label === dir }"
+            @click="selectedCube.label = dir"
+          >
+            {{ dir }}
+          </button>
+  </div>
+  </div>
     </div>
   </div>
 </template>
@@ -623,6 +630,29 @@ const canRemoveRowBottom = computed(() => gridRows.value > 1 && !hasCubeInRow(gr
 const canRemoveColumnLeft = computed(() => gridCols.value > 1 && !hasCubeInCol(0))
 const canRemoveColumnRight = computed(() => gridCols.value > 1 && !hasCubeInCol(gridCols.value - 1))
 
+function onTouchStart(e) {
+  const touch = e.touches[0]
+  lastMouseX.value = touch.clientX
+  lastMouseY.value = touch.clientY
+  dragging.value = true
+}
+
+
+
+function onTouchMove(e) {
+  if (!dragging.value || isCubeDragging.value) return
+  const touch = e.touches[0]
+  translateX.value += touch.clientX - lastMouseX.value
+  translateY.value += touch.clientY - lastMouseY.value
+  lastMouseX.value = touch.clientX
+  lastMouseY.value = touch.clientY
+}
+
+function onTouchEnd() {
+  dragging.value = false
+}
+
+
 // Add/Remove rows
 function addRowTop() {
   grid.value.unshift(Array.from({ length: gridCols.value }, () => null))
@@ -715,6 +745,22 @@ function handleDrop(e, row, col) {
     isCubeDragging.value = false
     return
   }
+  if (e.type === 'touchend') {
+    const touch = e.changedTouches[0]
+    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY)
+    const cellElement = dropTarget.closest('.grid-cell')
+    if (!cellElement) return
+    row = parseInt(cellElement.dataset.row)
+    col = parseInt(cellElement.dataset.col)
+    cubeData = JSON.parse(e.dataTransfer.getData('cube') || '{}')
+    fromRow = parseInt(e.dataTransfer.getData('fromRow') || '')
+    fromCol = parseInt(e.dataTransfer.getData('fromCol') || '')
+  } else {
+    cubeData = JSON.parse(e.dataTransfer.getData('cube') || '{}')
+    fromRow = parseInt(e.dataTransfer.getData('fromRow') || '')
+    fromCol = parseInt(e.dataTransfer.getData('fromCol') || '')
+  }
+  const fromPool = e.dataTransfer.getData('fromPool') === 'true'
   }
   if (!fromPool && !isNaN(fromRow) && !isNaN(fromCol)) {
     grid.value[fromRow][fromCol] = null
@@ -760,6 +806,7 @@ function exportHighlightedGrid() {
     justify-content: center;
     align-items: center;
     border-radius: 5px;
+    background-color: #ecf0f1;
     font-weight: bold;
   }
   .cube {
@@ -772,6 +819,20 @@ function exportHighlightedGrid() {
     position: relative;
     border-radius: 5px;
     color: white;
+  }
+    .path-found {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 24px;
+    background: rgba(46, 204, 113, 0.9);
+    color: white;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
   .highlighted {
     box-shadow: 0 0 0 3px #ffd700;
@@ -834,7 +895,14 @@ function exportHighlightedGrid() {
           .join(''),
       )
       .join('')}
+      
   </div>
+  <div class="grid-wrapper">
+  ${searchResults.value[0] ? 
+    `<div class="path-found">
+      Found: ${searchResults.value[0].name} on Row ${searchResults.value[0].row + 1}
+    </div>` : ''
+  }
   ${searchPath.value.length === 0 ? '<div class="no-path">No path found</div>' : ''}
   <div class="buttons">
     <button class="button" onclick="window.print()">Print</button>
@@ -1248,6 +1316,33 @@ function onFileChange(e) {
   border: none;
   color: white;
   cursor: pointer;
+}
+
+.direction-buttons {
+  display: grid;
+  grid-template-columns: repeat(8, 40px);
+  gap: 0.5rem;
+  padding: 0.5rem;
+  justify-content: center;
+}
+.direction-buttons button {
+  width: 40px;
+  height: 40px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.direction-buttons button:hover {
+  background-color: #f0f0f0;
+}
+
+.direction-buttons button.active {
+  background-color: #2196f3;
+  color: white;
+  border-color: #1976d2;
 }
 
 .highlighted-grid-buttons button:hover {
@@ -1990,11 +2085,7 @@ button:hover:not(:disabled) {
   border-radius: 6px;
   border: 1px solid #bdc3c7;
 }
-.direction-selector {
-  display: column;
-  gap: 4px;
-  max-width: 120px;
-}
+
 
 .direction-selector button {
   padding: 8px;
@@ -2006,31 +2097,5 @@ button:hover:not(:disabled) {
 .direction-selector button.active {
   background: #2196f3;
   color: white;
-}
-
-/* Position buttons in a compass layout */
-.direction-selector button:nth-child(1) {
-  grid-column: 2;
-} /* N */
-.direction-selector button:nth-child(2) {
-  grid-column: 3;
-} /* NE */
-.direction-selector button:nth-child(3) {
-  grid-column: 3;
-} /* E */
-.direction-selector button:nth-child(4) {
-  grid-column: 3;
-} /* SE */
-.direction-selector button:nth-child(5) {
-  grid-column: 2;
-} /* S */
-.direction-selector button:nth-child(6) {
-  grid-column: 1;
-} /* SW */
-.direction-selector button:nth-child(7) {
-  grid-column: 1;
-} /* W */
-.direction-selector button:nth-child(8) {
-  grid-column: 1;
 }
 </style>

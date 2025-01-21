@@ -132,6 +132,9 @@
             @mousedown="onMouseDown"
             @mousemove.prevent="onMouseMove"
             @mouseup="onMouseUp"
+            v-touch:start="onMouseDown"
+  v-touch:end="onMouseUp"
+            
           >
             <div class="grid-container" :style="gridStyle">
               <div v-for="(row, rowIndex) in grid" :key="'row-' + rowIndex" class="grid-row">
@@ -281,6 +284,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onBeforeUnmount } from 'vue'
+import Vue3TouchEvents from "vue3-touch-events";
 
 // Unique ID generator
 let uniqueId = 1
@@ -891,6 +895,14 @@ watch(
   },
   { deep: true },
 )
+
+function normalizeEvent(e) {
+  if (e.touches) {
+    return e.touches[0];
+  }
+  return e;
+}
+
 
 // Watch for path information
 watch(

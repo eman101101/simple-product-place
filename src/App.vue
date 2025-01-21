@@ -1,13 +1,23 @@
 <template>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-  <!-- Popup for occupied cell -->
-  <div v-if="showOccupiedPopup" class="modal">
-    <div v-if="showOccupiedPopup" class="modal-content">
-      <h2>This cell is already occupied.</h2>
-      <button @click="showOccupiedPopup = false">OK</button>
-    </div>
+  <meta name="viewport" />
+  <!-- Invalid Drop Popup -->
+<div v-if="showInvalidDropPopup" class="modal">
+  <div class="modal-content">
+    <h2>Invalid Drop</h2>
+    <p>{{ invalidDropMessage }}</p>
+    <button @click="showInvalidDropPopup = false">OK</button>
   </div>
+</div>
+
+
+    <!-- Load File -->
+  <input
+    type="file"
+    style="display: none"
+    ref="fileInput"
+    accept="application/json"
+    @change="onFileChange"
+  />
 
   <!-- Popup for Deleted Cube -->
   <div v-if="deletedCubeMsg" class="confirm-overlay" @click.self="deletedCubeMsg = ''">
@@ -40,9 +50,13 @@
   <!-- Highlighted Grid Modal -->
 
   <div v-if="highlightedGrid" class="modal">
-    <div class="highlighted-grid-wrapper">
+    <div class="highlighted-grid-wrapper"    >
       <div class="grid-viewport">
-        <div class="grid-container" :style="gridStyle">
+        <div class="grid-container" @mousedown="startHighlightedDrag"
+    @mousemove="handleHighlightedDrag"
+    @mouseup="stopHighlightedDrag"
+    @mouseleave="stopHighlightedDrag"
+:style="gridStyle">
           <div
             v-for="(row, rowIndex) in highlightedGrid"
             :key="'highlighted-row-' + rowIndex"
@@ -54,7 +68,7 @@
               class="grid-cell"
               :class="{ highlighted: cell && cell.highlight }"
             >
-              <div v-if="cell !== null" class="cube" :class="cell.class.toLowerCase()">
+              <div v-if="cell !== null" class="cube" :class="cell.class.toLowerCase()" @dragend="onDragEnd">
                 {{ cell.label }}
                 <span v-if="cell.step" class="step-number">{{ cell.step }}</span>
               </div>
@@ -89,7 +103,6 @@
   <div class="debug-panel">
     <div class="debug-header">
       Debug Panel
-      <span>[{{ debugCollapsed ? '+' : '-' }}]</span>
     </div>
     <div v-if="!debugCollapsed" class="debug-content">
       <p>Dragging: {{ dragging }}</p>
@@ -105,7 +118,7 @@
     <!-- Side Controls Left -->
     <div class="side-controls-left">
       <button @click="addColumnLeft">+</button>
-      <button @click="removeColumnLeft">-</button>
+      <button :disabled="!canRemoveColumnLeft" @click="removeColumnLeft">-</button>
     </div>
 
     <div>
@@ -174,18 +187,6 @@
             </div>
           </div>
         </div>
-        <div class="mobile-column-controls">
-    <div class="left-controls">
-      <p>Left Column</p>
-      <button @click="addColumnLeft">+</button>
-      <button :disabled="!canRemoveColumnLeft" @click="removeColumnLeft">-</button>
-    </div>
-    <div class="right-controls">
-      <p>Right Column</p>
-      <button @click="addColumnRight">+</button>
-      <button :disabled="!canRemoveColumnRight" @click="removeColumnRight">-</button>
-    </div>
-  </div>
         <div class="center-buttons">
           <button @click="centerGrid">Center Grid</button>
           <button @pointerdown="startZoomIn" @pointerup="stopZoom" @pointerleave="stopZoom">
@@ -470,6 +471,10 @@ const offsetX = ref(0)
 const offsetY = ref(0)
 const isDragging = ref(false)
 
+const showInvalidDropPopup = ref(false)
+const invalidDropMessage = ref('')
+
+
 function onGridMouseDown(e) {
   // Only start dragging if clicked on an 'empty space' in the grid wrapper
   // (for example, if e.target matches a class 'grid-container-wrapper')
@@ -535,6 +540,8 @@ function centerGrid() {
       translateY.value = finalCenterY
     }, 200) // After first transform completes
   }, 50) // After zoom resets
+  dragging.value = false
+  isCubeDragging.value = false
 }
 watch(isCubeDragging, (val) => {
   console.log(`Cube dragging changed: ${val}`)
@@ -662,6 +669,7 @@ function hasCubeInCol(colIndex) {
 function dragStart(e, row, col) {
   const cube = grid.value[row][col]
   if (!cube) return
+  isCubeDragging.value = true
   e.dataTransfer.setData('cube', JSON.stringify(cube))
   e.dataTransfer.setData('fromRow', row)
   e.dataTransfer.setData('fromCol', col)
@@ -672,19 +680,38 @@ function dragStartFromPool(e, cubeType) {
   e.dataTransfer.setData('fromPool', 'true')
 }
 
+function handleDropCancel() {
+  isCubeDragging.value = false
+  console.log('Drop cancelled - cube drag reset')
+}
+
+
 function handleDrop(e, row, col) {
+  isCubeDragging.value = false
   const cubeData = JSON.parse(e.dataTransfer.getData('cube') || '{}')
   const fromRow = parseInt(e.dataTransfer.getData('fromRow') || '', 10)
   const fromCol = parseInt(e.dataTransfer.getData('fromCol') || '', 10)
   const fromPool = e.dataTransfer.getData('fromPool') === 'true'
   if (grid.value[row][col] !== null) {
     showOccupiedPopup.value = true
+    dragging.value = false
+    isCubeDragging.value = false
     return
+    if (rowIndex < 0 || rowIndex >= grid.value.length ||
+      colIndex < 0 || colIndex >= grid.value[0].length) {
+    invalidDropMessage.value = 'Invalid drop location - outside grid'
+    showInvalidDropPopup.value = true
+    dragging.value = false
+    isCubeDragging.value = false
+    return
+  }
   }
   if (!fromPool && !isNaN(fromRow) && !isNaN(fromCol)) {
     grid.value[fromRow][fromCol] = null
   }
   grid.value[row][col] = cubeData
+  dragging.value = false
+  isCubeDragging.value = false
 }
 
 function exportHighlightedGrid() {
@@ -804,7 +831,6 @@ function exportHighlightedGrid() {
   </div>
 </div>`
 const showDebug = ref(true)
-const debugCollapsed = ref(false)
 
 function toggleDebug() {
   debugCollapsed.value = !debugCollapsed.value
@@ -820,6 +846,30 @@ function toggleDebug() {
   URL.revokeObjectURL(url)
 }
 
+function checkInvalidDrop(rowIndex, colIndex) {
+  if (rowIndex < 0 || rowIndex >= grid.value.length ||
+      colIndex < 0 || colIndex >= grid.value[0].length) {
+    console.log('Invalid drop location - outside grid')
+    dragging.value = false
+    isCubeDragging.value = false
+    return true
+  }
+  
+  if (grid.value[rowIndex][colIndex] !== null) {
+    console.log('Invalid drop location - cell already occupied')
+    showOccupiedPopup.value = true
+    dragging.value = false
+    isCubeDragging.value = false
+    return true
+  }
+  
+  return false
+}
+function onDragEnd() {
+  isCubeDragging.value = false
+}
+
+
 // Delete confirm
 function handleDropToTrash(e) {
   const data = e.dataTransfer.getData('cube') || '{}'
@@ -830,6 +880,8 @@ function handleDropToTrash(e) {
   cubeToDelete.value = cubeData
   deleteRow.value = fromRow
   deleteCol.value = fromCol
+  dragging.value = false
+  isCubeDragging.value = false
   showDeletePopup.value = true
 }
 
@@ -859,6 +911,34 @@ function downloadJson() {
   URL.revokeObjectURL(url)
   showExportConfirm.value = true
   showExportConfirm.value = true
+}
+
+const isHighlightedDragging = ref(false)
+const highlightedStartX = ref(0)
+const highlightedStartY = ref(0)
+const highlightedOffsetX = ref(0)
+const highlightedOffsetY = ref(0)
+
+const highlightedTransform = computed(() => ({
+  transform: `translate(${highlightedOffsetX.value}px, ${highlightedOffsetY.value}px)`,
+  cursor: isHighlightedDragging.value ? 'grabbing' : 'grab',
+  userSelect: 'none'
+}))
+
+function startHighlightedDrag(e) {
+  isHighlightedDragging.value = true
+  highlightedStartX.value = e.clientX - highlightedOffsetX.value
+  highlightedStartY.value = e.clientY - highlightedOffsetY.value
+}
+
+function handleHighlightedDrag(e) {
+  if (!isHighlightedDragging.value) return
+  highlightedOffsetX.value = e.clientX - highlightedStartX.value
+  highlightedOffsetY.value = e.clientY - highlightedStartY.value
+}
+
+function stopHighlightedDrag() {
+  isHighlightedDragging.value = false
 }
 
 function cancelDelete() {
@@ -1145,12 +1225,17 @@ function onFileChange(e) {
   width: 100%;
 }
 
+.highlighted-grid-wrapper {
+  background-color: rgb(60, 63, 66); /* Light blue with opacity */
+  transition: background-color 0.3s ease;
+  box-shadow: inset 0 0 0 2px rgba(33, 150, 243, 0.5);
+}
+
 .highlighted-grid-buttons button {
   min-width: 80px;
   padding: 8px 16px;
   border-radius: 4px;
   border: none;
-  background: #2196f3;
   color: white;
   cursor: pointer;
 }
@@ -1268,8 +1353,6 @@ function onFileChange(e) {
   padding: 0;
   list-style: none;
   width: 100%;
-  max-height: 50vh;
-  overflow-x: hidden;
 }
 
 .grocery-item {
@@ -1288,26 +1371,13 @@ function onFileChange(e) {
     margin: 0;
     transform: scale(0.8);
   }
-
-  .bottom-pool {
-    gap: 0.5rem;
-    padding: 0.5rem;
-  }
-
-  .available-cube {
-    width: 70px;
-    height: 70px;
-  }
-  .side-controls-right {
-    display: none;
-  }
-
   .mobile-column-controls {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  z-index: 1000;
-}
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 1rem;
+    z-index: 1000;
+  }
 
   .left-controls,
   .right-controls {
@@ -1321,12 +1391,6 @@ function onFileChange(e) {
     border-radius: 50%;
     padding: 0;
     font-size: 1.2rem;
-  }
-}
-
-@media (min-width: 769px) {
-  .mobile-column-controls {
-    display: none;
   }
 }
 
@@ -1512,8 +1576,6 @@ function onFileChange(e) {
 .bottom-pool {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  padding: 1rem;
 }
 
 button {
@@ -1719,6 +1781,7 @@ button:hover:not(:disabled) {
 
 .highlighted-grid {
   margin-top: 2rem;
+  
 }
 
 .grid-cell.highlighted {

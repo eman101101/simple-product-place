@@ -63,8 +63,8 @@
       </div>
       <div v-if="searchPath.length === 0" class="no-path-found">No path found</div>
       <div class="highlighted-grid-buttons">
-        <button @mousedown="startZoomIn" @mouseup="stopZoom" @mouseleave="stopZoom">Zoom In</button>
-        <button @mousedown="startZoomOut" @mouseup="stopZoom" @mouseleave="stopZoom">
+        <button @pointerdown="startZoomIn" @pointerup="stopZoom" @pointerleave="stopZoom">Zoom In</button>
+        <button @pointerdown="startZoomOut" @pointerup="stopZoom" @pointerleave="stopZoom">
           Zoom Out
         </button>
 
@@ -85,7 +85,20 @@
       </div>
     </div>
   </div>
-
+  <div class="debug-panel">
+    <div class="debug-header">
+      Debug Panel
+      <span>[{{ debugCollapsed ? '+' : '-' }}]</span>
+    </div>
+    <div v-if="!debugCollapsed" class="debug-content">
+      <p>Dragging: {{ dragging }}</p>
+      <p>Cube Dragging: {{ isCubeDragging }}</p>
+      <p>Zoom: {{ zoomFactor }}</p>
+      <p>Grid Position: X:{{ translateX }} Y:{{ translateY }}</p>
+      <p>Selected Cube: {{ selectedCube?.label || 'none' }}</p>
+      <p>Last Mouse: X:{{ lastMouseX }} Y:{{ lastMouseY }}</p>
+    </div>
+  </div>
   <!-- Grid Wrapper -->
   <div class="grid-wrapper">
     <!-- Side Controls Left -->
@@ -112,16 +125,14 @@
         <button @click="addRowTop">+</button>
         <button :disabled="!canRemoveRowTop" @click="removeRowTop">-</button>
       </div>
-      <div @mousedown="onGridMouseDown">
+      <div @pointerdown="onGridMouseDown">
         <div class="grid-viewport">
           <div
             class="grid-container-wrapper"
             :style="wrapperTransform"
-            @mousedown="onMouseDown"
-            @mousemove.prevent="onMouseMove"
-            @mouseup="onMouseUp"
-            v-touch:start="onMouseDown"
-            v-touch:end="onMouseUp">
+            @pointerdown="onMouseDown"
+            @pointermove.prevent="onMouseMove"
+            @pointerup="onMouseUp">
             <div class="grid-container" :style="gridStyle">
               <div v-for="(row, rowIndex) in grid" :key="'row-' + rowIndex" class="grid-row">
                 <div
@@ -162,29 +173,36 @@
             </div>
           </div>
         </div>
+        <div class="mobile-column-controls">
+    <div class="left-controls">
+      <p>Left Side</p>
+      <button @click="addColumnLeft">+</button>
+      <button :disabled="!canRemoveColumnLeft" @click="removeColumnLeft">-</button>
+    </div>
+    <div class="right-controls">
+      <p>Right Side</p>
+      <button @click="addColumnRight">+</button>
+      <button :disabled="!canRemoveColumnRight" @click="removeColumnRight">-</button>
+    </div>
+  </div>
         <div class="center-buttons">
           <button @click="centerGrid">Center Grid</button>
-          <button @mousedown="startZoomIn" @mouseup="stopZoom" @mouseleave="stopZoom">
+          <button @pointerdown="startZoomIn" @pointerup="stopZoom" @pointerleave="stopZoom">
             Zoom In
           </button>
-          <button @mousedown="startZoomOut" @mouseup="stopZoom" @mouseleave="stopZoom">
+          <button @pointerdown="startZoomOut" @pointerup="stopZoom" @pointerleave="stopZoom">
             Zoom Out
           </button>
+          
         </div>
+        
       </div>
       <div class="bottom-row-controls">
         <button @click="addRowBottom">+</button>
         <button :disabled="!canRemoveRowBottom" @click="removeRowBottom">-</button>
       </div>
-    </div>
 
-    <!-- Right Column Controls -->
-    <div class="side-controls-right">
-        <button @click="addColumnRight">+</button>
-        <button :disabled="!canRemoveColumnRight" @click="removeColumnRight">-</button>
-    </div>
-  </div>
-  <!-- Cubes below the grid area -->
+        <!-- Cubes below the grid area -->
   <div class="bottom-pool">
     <div
       v-for="cubeType in cubeTypes"
@@ -200,6 +218,15 @@
       <span class="trash-text">Trash🗑️</span>
     </div>
   </div>
+    </div>
+
+    <!-- Right Column Controls -->
+    <div class="side-controls-right">
+        <button @click="addColumnRight">+</button>
+        <button :disabled="!canRemoveColumnRight" @click="removeColumnRight">-</button>
+    </div>
+  </div>
+
   <!-- Modal -->
   <div v-if="showModal" class="modal" @click.self="closeModal">
     <div class="modal-content">
@@ -270,7 +297,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onBeforeUnmount } from 'vue'
-import Vue3TouchEvents from "vue3-touch-events";
+
 
 // Unique ID generator
 let uniqueId = 1
@@ -434,6 +461,8 @@ const translateY = ref(0)
 const dragging = ref(false)
 const lastMouseX = ref(0)
 const lastMouseY = ref(0)
+const isCubeDragging = ref(false)
+
 
 // -- Draggable and zoomable logic --
 const offsetX = ref(0)
@@ -448,8 +477,8 @@ function onGridMouseDown(e) {
     isDragging.value = true
     startX = e.clientX - offsetX.value
     startY = e.clientY - offsetY.value
-    document.addEventListener('mousemove', onGridMouseMove)
-    document.addEventListener('mouseup', onGridMouseUp)
+    document.addEventListener('pointermove', onGridMouseMove)
+    document.addEventListener('pointerup', onGridMouseUp)
   }
 }
 
@@ -506,6 +535,9 @@ function centerGrid() {
     }, 200) // After first transform completes
   }, 50) // After zoom resets
 }
+watch(isCubeDragging, (val) => {
+  console.log(`Cube dragging changed: ${val}`)
+})
 
 const wrapperTransform = computed(() => ({
   transform: `translate(${translateX.value}px, ${translateY.value}px) scale(${zoomFactor.value})`,
@@ -514,19 +546,30 @@ const wrapperTransform = computed(() => ({
   'transition-property': 'transform',
   'will-change': 'transform',
 }))
-
 function onMouseDown(e) {
+  if (isCubeDragging.value) return
   dragging.value = true
   lastMouseX.value = e.clientX
   lastMouseY.value = e.clientY
 }
 
 function onMouseMove(e) {
-  if (!dragging.value) return
+  // Only move grid if not dragging a cube
+  if (!dragging.value || isCubeDragging.value) return
   translateX.value += e.clientX - lastMouseX.value
   translateY.value += e.clientY - lastMouseY.value
   lastMouseX.value = e.clientX
   lastMouseY.value = e.clientY
+}
+
+function checkCubeDrag(event) {
+  const target = event.target
+  const isCube = target.classList.contains('cube') || 
+                 target.closest('.cube') !== null
+  
+  isCubeDragging.value = isCube
+  console.log('Cube drag state:', isCubeDragging.value)
+  return isCube
 }
 
 function onMouseUp() {
@@ -534,8 +577,8 @@ function onMouseUp() {
 }
 
 onBeforeUnmount(() => {
-  document.removeEventListener('mousemove', onMouseMove)
-  document.removeEventListener('mouseup', onMouseUp)
+  document.removeEventListener('pointermove', onMouseMove)
+  document.removeEventListener('pointerup', onMouseUp)
 })
 const showHighlightedGridModal = ref(false)
 function closeHighlightedGridModal() {
@@ -759,7 +802,12 @@ function exportHighlightedGrid() {
     <button class="button" onclick="window.print()">Print</button>
   </div>
 </div>`
+const showDebug = ref(true)
+const debugCollapsed = ref(false)
 
+function toggleDebug() {
+  debugCollapsed.value = !debugCollapsed.value
+}
   const blob = new Blob([gridHTML], { type: 'text/html' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
@@ -817,7 +865,6 @@ function cancelDelete() {
   deleteRow.value = null
   deleteCol.value = null
 }
-
 // Cube creation
 function createCubeInstance(cubeType) {
   const newCube = {
@@ -881,14 +928,6 @@ watch(
   },
   { deep: true },
 )
-
-function normalizeEvent(e) {
-  if (e.touches) {
-    return e.touches[0];
-  }
-  return e;
-}
-
 
 // Watch for path information
 watch(
@@ -1023,12 +1062,12 @@ function onFileChange(e) {
   text-align: center;
 }
 .grid-viewport {
-  width: 40vw;
-  height: 50vh;
+  width: 50vw;
+  height: 60vh;
   border: 2px solid #ccc;
   overflow: hidden;
-  position: relative;
   margin: 0 auto;
+  
 }
 
 .confirm-buttons {
@@ -1062,26 +1101,25 @@ function onFileChange(e) {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  max-width: 900px;
   margin: 0 auto;
 }
 
 .side-controls-left {
   left: -50px;
   top: 50%;
-  transform: translateY(-50%);
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   padding: 15px;
+  transform: translateY(-50%);
   z-index: 2;
 }
 
 .side-controls-right {
   right: -50px;
   top: 50%;
-  transform: translateY(-50%);
   display: flex;
+  transform: translateY(-50%);
   flex-direction: column;
   gap: 0.5rem;
   padding: 15px;
@@ -1169,19 +1207,20 @@ function onFileChange(e) {
 
 .header-controls {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 0.5rem;
-  width: 300px;
-  margin: 0 auto;
+  justify-content: center;
+  gap: 1rem;
+  padding: 10px;
+  margin: 0;
+  width: 100%;
 }
+
 .header-btn {
   width: 200px;
 }
 
 .grid-container-wrapper {
-  overflow: visible;
-  max-width: 100%;
+  display: grid;
+  place-items: center;
 }
 
 .header-btn {
@@ -1241,8 +1280,8 @@ function onFileChange(e) {
 
 @media (max-width: 768px) {
   .grid-viewport {
-    width: 60vw;
-    height: 50vw;
+    width: 85vw;
+    height: 70vw;
     margin: 0;
   }
 
@@ -1254,6 +1293,38 @@ function onFileChange(e) {
   .available-cube {
     width: 70px;
     height: 70px;
+  }
+  .side-controls-left,
+  .side-controls-right {
+    display: none;
+  }
+
+  .mobile-column-controls {
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 1rem;
+    z-index: 1000;
+  }
+
+  .left-controls,
+  .right-controls {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .mobile-column-controls button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    padding: 0;
+    font-size: 1.2rem;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-column-controls {
+    display: none;
   }
 }
 
@@ -1414,7 +1485,28 @@ function onFileChange(e) {
   align-items: center;
   gap: 20px;
 }
+.debug-panel {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #00ff00;
+  padding: 10px;
+  border-radius: 5px;
+  font-family: monospace;
+  z-index: 9999;
+  min-width: 200px;
+}
 
+.debug-header {
+  cursor: pointer;
+  user-select: none;
+}
+
+.debug-content p {
+  margin: 5px 0;
+  font-size: 12px;
+}
 .bottom-pool {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1447,6 +1539,8 @@ button:hover:not(:disabled) {
   display: grid;
   gap: 5px;
   justify-content: center;
+  align-content: center; 
+  min-height: 100%;     
   margin: 0 auto;
   padding: 10px;
 }
@@ -1634,32 +1728,22 @@ button:hover:not(:disabled) {
   font-size: 1.2rem;
   margin: 10px auto;
   border-radius: 8px;
-  color: #e4dada;
   border: 1px solid #ccc;
   cursor: grab;
   font-weight: bold;
   transition: transform 0.2s;
   position: relative;
   text-align: center;
+  color: white;
 }
 .trash-text {
   font-size: 1em;
-  color: #f8f5f5;
 }
 
 .trash:hover {
   transform: scale(1.05);
 }
 
-.trash-icon {
-  font-size: 1.5em;
-  margin-bottom: 5px;
-}
-
-.trash-text {
-  font-size: 0.9em;
-  color: #666;
-}
 .path-overlay {
   position: absolute;
   top: 0;
@@ -1806,8 +1890,7 @@ button:hover:not(:disabled) {
   border: 1px solid #bdc3c7;
 }
 .direction-selector {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: column;
   gap: 4px;
   max-width: 120px;
 }

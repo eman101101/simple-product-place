@@ -1,5 +1,10 @@
 <template>
   <meta name="viewport" />
+  <div 
+    class="app-container"
+    @touchstart.prevent
+    @touchmove.prevent
+    @touchend.prevent>
   <!-- Invalid Drop Popup -->
 <div v-if="showInvalidDropPopup" class="modal">
   <div class="modal-content">
@@ -52,11 +57,7 @@
   <div v-if="highlightedGrid" class="modal">
     <div class="highlighted-grid-wrapper"    >
       <div class="grid-viewport">
-        <div class="grid-container" @mousedown="startHighlightedDrag"
-    @mousemove="handleHighlightedDrag"
-    @mouseup="stopHighlightedDrag"
-    @mouseleave="stopHighlightedDrag"
-:style="gridStyle">
+        <div class="grid-container" :style="gridStyle">
           <div
             v-for="(row, rowIndex) in highlightedGrid"
             :key="'highlighted-row-' + rowIndex"
@@ -76,6 +77,9 @@
           </div>
         </div>
       </div>
+      <div class="path-found">
+    Found: {{ searchResults[0]?.name }} on Row {{ searchResults[0]?.row }}
+  </div>
       <div v-if="searchPath.length === 0" class="no-path-found">No path found</div>
       <div class="highlighted-grid-buttons">
         <button @pointerdown="startZoomIn" @pointerup="stopZoom" @pointerleave="stopZoom">Zoom In</button>
@@ -98,19 +102,6 @@
         <button @click="confirmDelete">Yes</button>
         <button @click="cancelDelete">No</button>
       </div>
-    </div>
-  </div>
-  <div class="debug-panel">
-    <div class="debug-header">
-      Debug Panel
-    </div>
-    <div v-if="!debugCollapsed" class="debug-content">
-      <p>Dragging: {{ dragging }}</p>
-      <p>Cube Dragging: {{ isCubeDragging }}</p>
-      <p>Zoom: {{ zoomFactor }}</p>
-      <p>Grid Position: X:{{ translateX }} Y:{{ translateY }}</p>
-      <p>Selected Cube: {{ selectedCube?.label || 'none' }}</p>
-      <p>Last Mouse: X:{{ lastMouseX }} Y:{{ lastMouseY }}</p>
     </div>
   </div>
   <!-- Grid Wrapper -->
@@ -295,10 +286,11 @@
       </div>
     </div>
   </div>
+</div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onBeforeUnmount } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 
 
 // Unique ID generator
@@ -539,12 +531,23 @@ function centerGrid() {
       translateX.value = finalCenterX
       translateY.value = finalCenterY
     }, 200) // After first transform completes
-  }, 50) // After zoom resets
+  }, 200) // After zoom resets
   dragging.value = false
   isCubeDragging.value = false
 }
 watch(isCubeDragging, (val) => {
   console.log(`Cube dragging changed: ${val}`)
+})
+
+onMounted(() => {
+  // Small delay to ensure DOM is ready
+  setTimeout(() => {
+    centerGrid()
+    console.log('Initial grid centering complete')
+  }, 100)
+  if (window.PointerEvent) {
+    document.documentElement.style.touchAction = 'none'
+  }
 })
 
 const wrapperTransform = computed(() => ({
@@ -1088,6 +1091,18 @@ function onFileChange(e) {
 </script>
 
 <style scoped>
+
+.app-container {
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+* {
+  touch-action: none;
+}
+
 .app-message {
   background: #ffc107;
   color: #333;
@@ -1355,6 +1370,28 @@ function onFileChange(e) {
   width: 100%;
 }
 
+.path-found {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 2rem;
+  font-weight: 500;
+  text-align: center;
+  animation: slideUp 0.3s ease-out;
+  z-index: 1000;
+}
+
+.no-path-found {
+  background: rgba(231, 76, 60, 0.9);
+  color: white;
+  border: 1px solid #c0392b;
+  padding: 12px 24px;
+  font-size: 2rem;
+  font-weight: 500;
+  text-align: center;
+  animation: slideUp 0.3s ease-out;
+  z-index: 1000;
+}
+
 .grocery-item {
   display: flex;
   flex-direction: column;
@@ -1535,7 +1572,16 @@ function onFileChange(e) {
   text-align: center;
   color: #34495e;
 }
-
+@keyframes slideUp {
+  from {
+    transform: translate(0, 20px);
+    opacity: 0;
+  }
+  to {
+    transform: translate(0, 0);
+    opacity: 1;
+  }
+}
 /* Controls Styling */
 .controls {
   display: flex;
@@ -1603,10 +1649,8 @@ button:hover:not(:disabled) {
   display: grid;
   gap: 5px;
   justify-content: center;
-  align-content: center; 
-  min-height: 100%;     
+  align-content: center;    
   margin: 0 auto;
-  padding: 10px;
 }
 
 .grid-row {
@@ -1772,10 +1816,7 @@ button:hover:not(:disabled) {
   grid-template-areas:
     'item1 item2 item3'
     '. item4 item5';
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.1rem;
+  padding: 0.5rem;
   z-index: 1;
 }
 

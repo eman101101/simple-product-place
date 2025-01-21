@@ -1,10 +1,5 @@
 <template>
   <meta name="viewport" />
-  <div 
-    class="app-container"
-    @touchstart.prevent
-    @touchmove.prevent
-    @touchend.prevent>
   <!-- Invalid Drop Popup -->
 <div v-if="showInvalidDropPopup" class="modal">
   <div class="modal-content">
@@ -102,6 +97,19 @@
         <button @click="confirmDelete">Yes</button>
         <button @click="cancelDelete">No</button>
       </div>
+    </div>
+  </div>
+  <div class="debug-panel">
+    <div class="debug-header">
+      Debug Panel
+    </div>
+    <div v-if="!debugCollapsed" class="debug-content">
+      <p>Dragging: {{ dragging }}</p>
+      <p>Cube Dragging: {{ isCubeDragging }}</p>
+      <p>Zoom: {{ zoomFactor }}</p>
+      <p>Grid Position: X:{{ translateX }} Y:{{ translateY }}</p>
+      <p>Selected Cube: {{ selectedCube?.label || 'none' }}</p>
+      <p>Last Mouse: X:{{ lastMouseX }} Y:{{ lastMouseY }}</p>
     </div>
   </div>
   <!-- Grid Wrapper -->
@@ -286,7 +294,6 @@
       </div>
     </div>
   </div>
-</div>
 </template>
 
 <script setup>
@@ -316,6 +323,8 @@ const highlightedCube = ref(null)
 const appMessage = ref('')
 const searchPath = ref([]) // store BFS path as array of [row, col]
 const highlightedGrid = ref(null)
+const gridCenterX = ref(0)
+const gridCenterY = ref(0)
 
 // Search function
 function performSearch() {
@@ -369,6 +378,7 @@ function computePathToCube({ row, col }) {
   }
   const path = findPathIgnoringGroceries([entryRow, entryCol], [row, col])
   searchPath.value = path
+  
 }
 
 // BFS ignoring all Grocery cubes except the target
@@ -545,9 +555,6 @@ onMounted(() => {
     centerGrid()
     console.log('Initial grid centering complete')
   }, 100)
-  if (window.PointerEvent) {
-    document.documentElement.style.touchAction = 'none'
-  }
 })
 
 const wrapperTransform = computed(() => ({
@@ -1091,18 +1098,6 @@ function onFileChange(e) {
 </script>
 
 <style scoped>
-
-.app-container {
-  touch-action: none;
-  -webkit-touch-callout: none;
-  -webkit-tap-highlight-color: transparent;
-  user-select: none;
-}
-
-* {
-  touch-action: none;
-}
-
 .app-message {
   background: #ffc107;
   color: #333;

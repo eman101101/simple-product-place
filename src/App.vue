@@ -1,5 +1,6 @@
 <template>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
   <!-- Popup for occupied cell -->
   <div v-if="showOccupiedPopup" class="modal">
     <div v-if="showOccupiedPopup" class="modal-content">
@@ -175,12 +176,12 @@
         </div>
         <div class="mobile-column-controls">
     <div class="left-controls">
-      <p>Left Side</p>
+      <p>Left Column</p>
       <button @click="addColumnLeft">+</button>
       <button :disabled="!canRemoveColumnLeft" @click="removeColumnLeft">-</button>
     </div>
     <div class="right-controls">
-      <p>Right Side</p>
+      <p>Right Column</p>
       <button @click="addColumnRight">+</button>
       <button :disabled="!canRemoveColumnRight" @click="removeColumnRight">-</button>
     </div>
@@ -462,7 +463,7 @@ const dragging = ref(false)
 const lastMouseX = ref(0)
 const lastMouseY = ref(0)
 const isCubeDragging = ref(false)
-
+const isMobile = ref(window.innerWidth <= 768)
 
 // -- Draggable and zoomable logic --
 const offsetX = ref(0)
@@ -1267,6 +1268,8 @@ function onFileChange(e) {
   padding: 0;
   list-style: none;
   width: 100%;
+  max-height: 50vh;
+  overflow-x: hidden;
 }
 
 .grocery-item {
@@ -1280,9 +1283,10 @@ function onFileChange(e) {
 
 @media (max-width: 768px) {
   .grid-viewport {
-    width: 85vw;
-    height: 70vw;
+    width: 95vw;
+    height: 60vh;
     margin: 0;
+    transform: scale(0.8);
   }
 
   .bottom-pool {
@@ -1300,12 +1304,11 @@ function onFileChange(e) {
   }
 
   .mobile-column-controls {
-    bottom: 20px;
-    right: 20px;
-    display: flex;
-    gap: 1rem;
-    z-index: 1000;
-  }
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  z-index: 1000;
+}
 
   .left-controls,
   .right-controls {

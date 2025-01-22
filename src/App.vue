@@ -1175,12 +1175,15 @@ function onFileChange(e) {
 
 <style scoped>
 
-* {
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
+:root {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
-#app{touch-action: none;}
+
+
 .app-message {
   background: #ffc107;
   color: #333;

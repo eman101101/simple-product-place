@@ -1184,7 +1184,9 @@ function onFileChange(e) {
 </script>
 
 <style scoped>
-
+  * {
+    font-size: 105%;
+  }
 :root {
   position: fixed;
   width: 100%;

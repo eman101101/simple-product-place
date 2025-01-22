@@ -79,7 +79,9 @@
       </div>
       <div class="path-found">
     Found: {{ searchResults[0]?.name }} on Row {{ searchResults[0]?.row }}
-  </div>
+  </div>  <p>Selected Cube Type: {{ selectedCubeType?.class || 'none' }}</p>
+  <p>Placement Mode: {{ isPlacementMode }}</p>
+  <p>Last Drop Data: {{ lastDropData }}</p>
       <div v-if="searchPath.length === 0" class="no-path-found">No path found</div>
       <div class="highlighted-grid-buttons">
         <button @pointerdown="startZoomIn" @pointerup="stopZoom" @pointerleave="stopZoom">Zoom In</button>
@@ -217,7 +219,7 @@
       draggable="true"
       class="available-cube"
       @dragstart="dragStartFromPool($event, cubeType)"
-      @touchstart="dragStartFromPool($event, cubeType)"
+      @touchstart="handleCubeTap($event, cubeType)"
     >
       {{ cubeType.label }}
     </div>
@@ -314,6 +316,24 @@ const handleSwipe = (dir) => console.log('Swipe:', dir)
 const handleLongTap = (e) => console.log('Long tap:', e)
 const handleTouchStart = (e) => console.log('Touch start:', e)
 const handleTouchEnd = (e) => console.log('Touch end:', e)
+
+const selectedCubeType = ref(null)
+const isPlacementMode = ref(false)
+
+function handleCubeTap(cubeType) {
+  selectedCubeType.value = cubeType
+  isPlacementMode.value = true
+  console.log('Cube selected for placement:', cubeType)
+}
+
+function handleGridTap(row, col) {
+  if (isPlacementMode.value && selectedCubeType.value) {
+    const newCube = createCubeInstance(selectedCubeType.value)
+    grid.value[row][col] = newCube
+    isPlacementMode.value = false
+    selectedCubeType.value = null
+  }
+}
 
 // Unique ID generator
 let uniqueId = 1
@@ -919,7 +939,6 @@ function exportHighlightedGrid() {
 const showDebug = ref(true)
 
 function toggleDebug() {
-  debugCollapsed.value = !debugCollapsed.value
 }
   const blob = new Blob([gridHTML], { type: 'text/html' })
   const url = URL.createObjectURL(blob)
@@ -954,6 +973,7 @@ function checkInvalidDrop(rowIndex, colIndex) {
 function onDragEnd() {
   isCubeDragging.value = false
 }
+
 
 
 // Delete confirm
@@ -1022,6 +1042,9 @@ function handleHighlightedDrag(e) {
   highlightedOffsetX.value = e.clientX - highlightedStartX.value
   highlightedOffsetY.value = e.clientY - highlightedStartY.value
 }
+
+
+const lastDropData = ref(null)
 
 function stopHighlightedDrag() {
   isHighlightedDragging.value = false

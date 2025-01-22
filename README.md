@@ -1,4 +1,4 @@
-# Grocery Store Map Application
+# Simple Product Place
 
 ## Overview
 This application provides an interactive map interface for managing product locations in a grocery store. It allows store owners or managers to visualize a grid-based layout, add different product sections (cubes), and enable users to quickly search for items by name or UPC code.
@@ -47,11 +47,9 @@ This application provides an interactive map interface for managing product loca
    - Click “Save” to download a JSON representation of your entire layout.  
    - Click “Load” to use a saved store map.
 
-## Technologies Used
-- **Vue 3**:
-- **Vite**:
+## Uses Vue 3 + Vite
 
-## How to Deploy yourself
+## Deploy a Private instance
 1. Build the project:
    ```
    pnpm run build

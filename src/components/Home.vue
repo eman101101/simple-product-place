@@ -5,28 +5,30 @@
     <div class="homepage">
       <!-- Hero Section -->
       <section class="hero">
-        <h1>Simple Product Placement</h1>
-        <p class="subtitle">No AI bullshit, just map your store for free</p>
+        <h1>simple product place</h1>
+        <p class="subtitle">No AI bullshit, simple store maps</p>
         <button @click="$router.push('/')" class="cta-button">Test it out</button>
       </section>
   
       <!-- Features Section -->
-      <section class="features">
-        <h2>How It Works</h2>
-        <h3>Drag and Drop Cubes onto the grid</h3>
-      </section>
-  
-      <!-- Pricing Section -->
-      <section class="pricing">
-        <h2>Simple Pricing</h2>
-        <div class="pricing-cards">
-          <div class="price-card">
-            <h3>Free</h3>
-            <p class="price">$0</p>
-          </div>
 
-        </div>
-      </section>
+  <div class="feature-grid">
+
+
+      <h3>Create your store layout with customizable rows and columns. Drag and drop sections like Grocery, Entry, or Custom areas onto the grid.</h3>
+   
+
+      <h3>Place different section types (produce, dairy, walls) and add product details including names and UPCs.</h3>
+
+
+
+      <h3>Find any item instantly using the search bar. Results show exact location on your store map.</h3>
+
+
+
+      <h3>Export your layout to save your work. Import previously saved maps anytime.</h3>
+
+  </div>
     </div>
 </div>
     </div>
@@ -123,12 +125,36 @@
   }
   
   .feature-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 30px;
-    padding: 40px 0;
-  }
-  
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  padding: 2rem 0;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.feature-card:nth-child(1) h3 {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+}
+
+.feature-card:nth-child(2) h3 {
+  background: linear-gradient(135deg, #2196F3, #1976d2);
+}
+
+.feature-card:nth-child(3) h3 {
+  background: linear-gradient(135deg, #9C27B0, #7B1FA2);
+}
+
+.feature-card:nth-child(4) h3 {
+  background: linear-gradient(135deg, #FF9800, #F57C00);
+}
+
+.feature-card h3 {
+  color: white;
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 0 0 1rem 0;
+}
   .feature-card {
     padding: 30px;
     background: white;

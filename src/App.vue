@@ -146,7 +146,7 @@
           <input
             v-model="searchQuery"
             class="search-input"
-            placeholder="Search item or UPC"
+            placeholder="Search item / UPC"
             @keyup.enter="performSearch"
           />
           <button @click="performSearch">⌕</button>

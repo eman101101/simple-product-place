@@ -1,159 +1,83 @@
 <template>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, minimal-ui" />
-  <div >
-  <!-- Invalid Drop Popup -->
-<div v-if="showInvalidDropPopup" class="modal">
-  <div class="modal-content">
-    <h2>Invalid Drop</h2>
-    <p>{{ invalidDropMessage }}</p>
-    <button @click="showInvalidDropPopup = false">OK</button>
-  </div>
-</div>
-
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, minimal-ui"
+  />
+  <router-view></router-view>
+  <div>
+    <!-- Invalid Drop Popup -->
+    <div v-if="showInvalidDropPopup" class="modal">
+      <div class="modal-content">
+        <h2>Invalid Drop</h2>
+        <p>{{ invalidDropMessage }}</p>
+        <button @click="showInvalidDropPopup = false">OK</button>
+      </div>
+    </div>
 
     <!-- Load File -->
-  <input
-    type="file"
-    style="display: none"
-    ref="fileInput"
-    accept="application/json"
-    @change="onFileChange"
-  />
+    <input
+      type="file"
+      style="display: none"
+      ref="fileInput"
+      accept="application/json"
+      @change="onFileChange"
+    />
 
-  <!-- Popup for Deleted Cube -->
-  <div v-if="deletedCubeMsg" class="confirm-overlay" @click.self="deletedCubeMsg = ''">
-    <div class="deleted-cube-content">
-      <h2>{{ deletedCubeMsg }}</h2>
-      <button @click="deletedCubeMsg = ''">OK</button>
-    </div>
-  </div>
-
-  <!-- Search Results Modal -->
-  <div v-if="showSearchModal" class="modal" @click.self="closeSearchModal">
-    <div class="modal-content">
-      <span class="close-button" @click="closeSearchModal">&times;</span>
-      <h2>Search Results</h2>
-      <ul v-if="searchResults.length">
-        <li v-for="result in searchResults" :key="result.id" @click="selectSearchResult(result)">
-          {{ result.name }} (UPC: {{ result.upc }})
-        </li>
-      </ul>
-      <p v-else>No results found.</p>
-    </div>
-  </div>
-
-  <!-- Notifications/Confirmations -->
-  <div v-if="appMessage" class="modal">
-    {{ appMessage }}
-    <button @click="appMessage = ''">OK</button>
-  </div>
-
-  <!-- Highlighted Grid Modal -->
-
-  <div v-if="highlightedGrid" class="modal">
-    <div class="highlighted-grid-wrapper"    >
-      <div class="grid-viewport">
-        <div class="grid-container" :style="gridStyle">
-          <div
-            v-for="(row, rowIndex) in highlightedGrid"
-            :key="'highlighted-row-' + rowIndex"
-            class="grid-row"
-          >
-            <div
-              v-for="(cell, colIndex) in row"
-              :key="'highlighted-cell-' + rowIndex + '-' + colIndex"
-              class="grid-cell"
-              :class="{ highlighted: cell && cell.highlight }"
-            >
-              <div v-if="cell !== null" class="cube" :class="cell.class.toLowerCase()"  draggable="true"
-  @dragstart="dragStart($event, rowIndex, colIndex)"
-  @touchstart="dragStart($event, rowIndex, colIndex)"
-  @click="openCubeModal(cell, rowIndex, colIndex)"
-  @touchend="handleDrop($event, rowIndex, colIndex)" @dragend="onDragEnd">
-                {{ cell.label }}
-                <span v-if="cell.step" class="step-number">{{ cell.step }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="path-found">
-    Found: {{ searchResults[0]?.name }} on Row {{ searchResults[0]?.row }}
-  </div>  <p>Selected Cube Type: {{ selectedCubeType?.class || 'none' }}</p>
-  <p>Placement Mode: {{ isPlacementMode }}</p>
-  <p>Last Drop Data: {{ lastDropData }}</p>
-      <div v-if="searchPath.length === 0" class="no-path-found">No path found</div>
-      <div class="highlighted-grid-buttons">
-        <button @pointerdown="startZoomIn" @pointerup="stopZoom" @pointerleave="stopZoom">Zoom In</button>
-        <button @pointerdown="startZoomOut" @pointerup="stopZoom" @pointerleave="stopZoom">
-          Zoom Out
-        </button>
-
-        <button @click="exportHighlightedGrid" class="export-button">Export</button>
-        <button @click="closeHighlightedGridModal" class="export-button">Close</button>
+    <!-- Popup for Deleted Cube -->
+    <div v-if="deletedCubeMsg" class="confirm-overlay" @click.self="deletedCubeMsg = ''">
+      <div class="deleted-cube-content">
+        <h2>{{ deletedCubeMsg }}</h2>
+        <button @click="deletedCubeMsg = ''">OK</button>
       </div>
     </div>
-  </div>
 
-  <!-- Confirm Deletion -->
-  <div v-if="cubeToDelete" class="confirm-overlay" @click.self="cancelDelete">
-    <div class="confirm-content">
-      <h2>Delete {{ cubeToDelete.label }}?</h2>
-      <p>This action is permanent. Continue?</p>
-      <div class="confirm-buttons">
-        <button @click="confirmDelete">Yes</button>
-        <button @click="cancelDelete">No</button>
+    <!-- Search Results Modal -->
+    <div v-if="showSearchModal" class="modal" @click.self="closeSearchModal">
+      <div class="modal-content">
+        <span class="close-button" @click="closeSearchModal">&times;</span>
+        <h2>Search Results</h2>
+        <ul v-if="searchResults.length">
+          <li v-for="result in searchResults" :key="result.id" @click="selectSearchResult(result)">
+            {{ result.name }} (UPC: {{ result.upc }})
+          </li>
+        </ul>
+        <p v-else>No results found.</p>
       </div>
     </div>
-  </div>
-  <!-- Grid Wrapper -->
-  <div class="grid-wrapper">
-    <!-- Side Controls Left -->
-    <div class="side-controls-left">
-      <button @click="addColumnLeft">+</button>
-      <button :disabled="!canRemoveColumnLeft" @click="removeColumnLeft">-</button>
+
+    <!-- Notifications/Confirmations -->
+    <div v-if="appMessage" class="modal">
+      {{ appMessage }}
+      <button @click="appMessage = ''">OK</button>
     </div>
 
-    <div>
-      <!-- Top Row Controls -->
+    <!-- Highlighted Grid Modal -->
 
-      <div class="header-controls">
-        <button @click="downloadJson">Save</button>
-        <button @click="$refs.fileInput.click()">Load</button>
-        <input
-          v-model="searchQuery"
-          class="search-input"
-          placeholder="Search item or UPC"
-          @keyup.enter="performSearch"
-        />
-        <button @click="performSearch">⌕</button>
-      </div>
-      <div class="top-row-controls">
-        <button @click="addRowTop">+</button>
-        <button :disabled="!canRemoveRowTop" @click="removeRowTop">-</button>
-      </div>
-      <div @pointerdown="onGridMouseDown">
-        <div class="grid-viewport">
-          <div
-            class="grid-container-wrapper"
-            :style="wrapperTransform"
-            @pointerdown="onMouseDown"
-            @pointermove.prevent="onMouseMove"
-            @pointerup="onMouseUp">
+    <div v-if="highlightedGrid" class="modal">
+      <div class="highlighted-grid-wrapper">
+        <div
+          class="highlighted-grid-container"
+          @pointerdown="startHighlightedGridDrag"
+          @pointermove="onHighlightedGridMouseMove"
+          @pointereup="stopHighlightedGridDrag"
+          @pointerleave="stopHighlightedGridDrag"
+          :style="{
+            cursor: isHighlightedGridDragging ? 'grabbing' : 'grab',
+            transform: 'translate(' + highlightedGridX + 'px, ' + highlightedGridY + 'px)',
+          }"
+        >
+          <div class="grid-viewport">
             <div class="grid-container" :style="gridStyle">
-              <div v-for="(row, rowIndex) in grid" :key="'row-' + rowIndex" class="grid-row">
+              <div
+                v-for="(row, rowIndex) in highlightedGrid"
+                :key="'highlighted-row-' + rowIndex"
+                class="grid-row"
+              >
                 <div
                   v-for="(cell, colIndex) in row"
-                  :key="'cell-' + rowIndex + '-' + colIndex"
+                  :key="'highlighted-cell-' + rowIndex + '-' + colIndex"
                   class="grid-cell"
-                  :class="{
-                    highlighted:
-                      highlightedCube &&
-                      highlightedCube.row === rowIndex &&
-                      highlightedCube.col === colIndex,
-                  }"
-                  @dragover.prevent
-                  @drop="handleDrop($event, rowIndex, colIndex)"
+                  :class="{ highlighted: cell && cell.highlight }"
                 >
                   <div
                     v-if="cell !== null"
@@ -163,146 +87,246 @@
                     @dragstart="dragStart($event, rowIndex, colIndex)"
                     @touchstart="dragStart($event, rowIndex, colIndex)"
                     @click="openCubeModal(cell, rowIndex, colIndex)"
-                    title="Click to edit cube"
+                    @touchend="handleDrop($event, rowIndex, colIndex)"
+                    @dragend="onDragEnd"
                   >
                     {{ cell.label }}
-                    <!-- Entry arrow -->
-                    <div
-                      v-if="cell.class === 'Custom'"
-                      :class="'arrow arrow-' + cell.direction"
-                    ></div>
-                    <!-- Grocery item count -->
-                    <div v-else-if="cell.class === 'Grocery'">
-                      <span class="item-count">{{ cell.items.length }}</span>
-                    </div>
+                    <span v-if="cell.step" class="step-number">{{ cell.step }}</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div class="center-buttons">
-          <button @click="centerGrid">Center Grid</button>
+        <div class="path-found">
+          Found: {{ searchResults[0]?.name }} on Row {{ searchResults[0]?.row }}
+        </div>
+        <div v-if="searchPath.length === 0" class="no-path-found">No path found</div>
+        <div class="highlighted-grid-buttons">
           <button @pointerdown="startZoomIn" @pointerup="stopZoom" @pointerleave="stopZoom">
             Zoom In
           </button>
           <button @pointerdown="startZoomOut" @pointerup="stopZoom" @pointerleave="stopZoom">
             Zoom Out
           </button>
-          
+
+          <button @click="exportHighlightedGrid" class="export-button">Export</button>
+          <button @click="closeHighlightedGridModal" class="export-button">Close</button>
         </div>
-        
       </div>
-      <div class="bottom-row-controls">
-        <button @click="addRowBottom">+</button>
-        <button :disabled="!canRemoveRowBottom" @click="removeRowBottom">-</button>
+    </div>
+
+    <!-- Confirm Deletion -->
+    <div v-if="cubeToDelete" class="confirm-overlay" @click.self="cancelDelete">
+      <div class="confirm-content">
+        <h2>Delete {{ cubeToDelete.label }}?</h2>
+        <p>This action is permanent. Continue?</p>
+        <div class="confirm-buttons">
+          <button @click="confirmDelete">Yes</button>
+          <button @click="cancelDelete">No</button>
+        </div>
       </div>
+    </div>
+    <!-- Grid Wrapper -->
+    <div class="grid-wrapper">
+      <!-- Side Controls Left -->
+      <div class="side-controls-left">
+        <button @click="addColumnLeft">+</button>
+        <button :disabled="!canRemoveColumnLeft" @click="removeColumnLeft">-</button>
+      </div>
+
+      <div>
+        <!-- Top Row Controls -->
+
+        <div class="header-controls">
+          <button @click="goToHome" >About</button>
+
+          <button @click="downloadJson">Save</button>
+          <button @click="$refs.fileInput.click()">Load</button>
+          <input
+            v-model="searchQuery"
+            class="search-input"
+            placeholder="Search item or UPC"
+            @keyup.enter="performSearch"
+          />
+          <button @click="performSearch">⌕</button>
+        </div>
+        <div class="top-row-controls">
+          <button @click="addRowTop">+</button>
+          <button :disabled="!canRemoveRowTop" @click="removeRowTop">-</button>
+        </div>
+        <div @pointerdown="onGridMouseDown">
+          <div class="grid-viewport">
+            <div
+              class="grid-container-wrapper"
+              :style="wrapperTransform"
+              @pointerdown="onMouseDown"
+              @pointermove.prevent="onMouseMove"
+              @pointerup="onMouseUp"
+            >
+              <div class="grid-container" :style="gridStyle">
+                <div v-for="(row, rowIndex) in grid" :key="'row-' + rowIndex" class="grid-row">
+                  <div
+                    v-for="(cell, colIndex) in row"
+                    :key="'cell-' + rowIndex + '-' + colIndex"
+                    class="grid-cell"
+                    :class="{
+                      highlighted:
+                        highlightedCube &&
+                        highlightedCube.row === rowIndex &&
+                        highlightedCube.col === colIndex,
+                    }"
+                    @dragover.prevent
+                    @drop="handleDrop($event, rowIndex, colIndex)"
+                  >
+                    <div
+                      v-if="cell !== null"
+                      class="cube"
+                      :class="cell.class.toLowerCase()"
+                      draggable="true"
+                      @dragstart="dragStart($event, rowIndex, colIndex)"
+                      @touchstart="dragStart($event, rowIndex, colIndex)"
+                      @click="openCubeModal(cell, rowIndex, colIndex)"
+                      title="Click to edit cube"
+                    >
+                      {{ cell.label }}
+                      <!-- Entry arrow -->
+                      <div
+                        v-if="cell.class === 'Custom'"
+                        :class="'arrow arrow-' + cell.direction"
+                      ></div>
+                      <!-- Grocery item count -->
+                      <div v-else-if="cell.class === 'Grocery'">
+                        <span class="item-count">{{ cell.items.length }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="center-buttons">
+            <button @click="centerGrid">Center Grid</button>
+            <button @pointerdown="startZoomIn" @pointerup="stopZoom" @pointerleave="stopZoom">
+              Zoom In
+            </button>
+            <button @pointerdown="startZoomOut" @pointerup="stopZoom" @pointerleave="stopZoom">
+              Zoom Out
+            </button>
+          </div>
+        </div>
+        <div class="bottom-row-controls">
+          <button @click="addRowBottom">+</button>
+          <button :disabled="!canRemoveRowBottom" @click="removeRowBottom">-</button>
+        </div>
 
         <!-- Cubes below the grid area -->
-  <div class="bottom-pool">
-    <div
-      v-for="cubeType in cubeTypes"
-      :key="cubeType.type"
-      draggable="true"
-      class="available-cube"
-      @dragstart="dragStartFromPool($event, cubeType)"
-      @touchstart="handleCubeTap($event, cubeType)"
-    >
-      {{ cubeType.label }}
-    </div>
-    <!-- Trash Icon -->
-    <div class="trash" @dragover.prevent @touchend="handleDropToTrash($event)" @drop="handleDropToTrash($event)">
-      <span class="trash-text">Trash🗑️</span>
-    </div>
-  </div>
-    </div>
-
-    <!-- Right Column Controls -->
-    <div class="side-controls-right">
-        <button @click="addColumnRight">+</button>
-        <button :disabled="!canRemoveColumnRight" @click="removeColumnRight">-</button>
-    </div>
-  </div>
-
-  <!-- Modal -->
-  <div v-if="showModal" class="modal" @click.self="closeModal">
-    <div class="modal-content">
-      <span class="close-button" @click="closeModal">&times;</span>
-      <h2>{{ selectedCube.label }} ({{ selectedCube.class }})</h2>
-
-      <!-- Grocery: rename + editable items -->
-      <div v-if="selectedCube.class === 'Grocery'">
-        <h3>Grocery Items: {{ selectedCube.items.length }}</h3>
-        <ul class="grocery-list">
-          <li v-for="(item, idx) in selectedCube.items" :key="idx" class="grocery-item">
-            <button @click="removeGroceryItem(idx)" class="remove-item">X</button>
-            <div class="item-name">
-              <textarea v-model="item.name" placeholder="Item Name" rows="1"></textarea>
-            </div>
-            
-            <div class="item-details">
-              <input v-model="item.upc" placeholder="UPC" />
-              <input v-model="item.row" placeholder="Row" />
-            </div>
-            
-          </li>
-        </ul>
-        <div class="item-controls">
-          <button
-            @click="addGroceryItem"
-            :disabled="selectedCube.items.length >= 99"
-            class="add-item"
+        <div class="bottom-pool">
+          <div
+            v-for="cubeType in cubeTypes"
+            :key="cubeType.type"
+            draggable="true"
+            class="available-cube"
+            @dragstart="dragStartFromPool($event, cubeType)"
+            @touchstart="handleCubeTap($event, cubeType)"
           >
-            +
-          </button>
-          <button @click="openCamera" class="camera-button">Open Camera</button>
+            {{ cubeType.label }}
+          </div>
+          <!-- Trash Icon -->
+          <div
+            class="trash"
+            @dragover.prevent
+            @touchend="handleDropToTrash($event)"
+            @drop="handleDropToTrash($event)"
+          >
+            <span class="trash-text">Trash🗑️</span>
+          </div>
         </div>
       </div>
 
-      <!-- Custom: rename cube -->
-      <div v-else-if="selectedCube.class === 'Custom'">
-        <h3>Rename Cube</h3>
-        <input
-          v-model="selectedCube.label"
-          type="text"
-          maxlength="20"
-          placeholder="Enter new name"
-        />
-        <h3>Arrow Direction</h3>
-        <div class="direction-buttons">
-          <button
-            v-for="dir in [
-              '↑', // N
-              '↗', // NE
-              '→', // E
-              '↘', // SE
-              '↓', // S
-              '↙', // SW
-              '←', // W
-              '↖', // NW
-            ]"
-            :key="dir"
-            :class="{ active: selectedCube.label === dir }"
-            @click="selectedCube.label = dir"
-          >
-            {{ dir }}
-          </button>
-  </div>
-  </div>
+      <!-- Right Column Controls -->
+      <div class="side-controls-right">
+        <button @click="addColumnRight">+</button>
+        <button :disabled="!canRemoveColumnRight" @click="removeColumnRight">-</button>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div v-if="showModal" class="modal" @click.self="closeModal">
+      <div class="modal-content">
+        <span class="close-button" @click="closeModal">&times;</span>
+        <h2>{{ selectedCube.label }} ({{ selectedCube.class }})</h2>
+
+        <!-- Grocery: rename + editable items -->
+        <div v-if="selectedCube.class === 'Grocery'">
+          <h3>Grocery Items: {{ selectedCube.items.length }}</h3>
+          <ul class="grocery-list">
+            <li v-for="(item, idx) in selectedCube.items" :key="idx" class="grocery-item">
+              <button @click="removeGroceryItem(idx)" class="remove-item">X</button>
+              <div class="item-name">
+                <textarea v-model="item.name" placeholder="Item Name" rows="1"></textarea>
+              </div>
+
+              <div class="item-details">
+                <input v-model="item.upc" placeholder="UPC" />
+                <input v-model="item.row" placeholder="Row" />
+              </div>
+            </li>
+          </ul>
+          <div class="item-controls">
+            <button
+              @click="addGroceryItem"
+              :disabled="selectedCube.items.length >= 99"
+              class="add-item"
+            >
+              +
+            </button>
+          </div>
+        </div>
+
+        <!-- Custom: rename cube -->
+        <div v-else-if="selectedCube.class === 'Custom'">
+          <h3>Rename Cube</h3>
+          <input
+            v-model="selectedCube.label"
+            type="text"
+            maxlength="20"
+            placeholder="Enter new name"
+          />
+          <h3>Arrow Direction</h3>
+          <div class="direction-buttons">
+            <button
+              v-for="dir in [
+                '↑', // N
+                '↗', // NE
+                '→', // E
+                '↘', // SE
+                '↓', // S
+                '↙', // SW
+                '←', // W
+                '↖', // NW
+              ]"
+              :key="dir"
+              :class="{ active: selectedCube.label === dir }"
+              @click="selectedCube.label = dir"
+            >
+              {{ dir }}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
-import Vue3TouchEvents from 'vue3-touch-events'
+import { useRouter } from 'vue-router'
+const router = useRouter()
 
-const handleTap = (e) => console.log('Tap:', e)
-const handleSwipe = (dir) => console.log('Swipe:', dir)
-const handleLongTap = (e) => console.log('Long tap:', e)
-const handleTouchStart = (e) => console.log('Touch start:', e)
-const handleTouchEnd = (e) => console.log('Touch end:', e)
+function goToHome() {
+  router.push('/home')
+}
 
 const selectedCubeType = ref(null)
 const isPlacementMode = ref(false)
@@ -311,15 +335,6 @@ function handleCubeTap(cubeType) {
   selectedCubeType.value = cubeType
   isPlacementMode.value = true
   console.log('Cube selected for placement:', cubeType)
-}
-
-function handleGridTap(row, col) {
-  if (isPlacementMode.value && selectedCubeType.value) {
-    const newCube = createCubeInstance(selectedCubeType.value)
-    grid.value[row][col] = newCube
-    isPlacementMode.value = false
-    selectedCubeType.value = null
-  }
 }
 
 // Unique ID generator
@@ -345,8 +360,6 @@ const highlightedCube = ref(null)
 const appMessage = ref('')
 const searchPath = ref([]) // store BFS path as array of [row, col]
 const highlightedGrid = ref(null)
-const gridCenterX = ref(0)
-const gridCenterY = ref(0)
 
 // Search function
 function performSearch() {
@@ -400,7 +413,6 @@ function computePathToCube({ row, col }) {
   }
   const path = findPathIgnoringGroceries([entryRow, entryCol], [row, col])
   searchPath.value = path
-  
 }
 
 // BFS ignoring all Grocery cubes except the target
@@ -488,7 +500,6 @@ const dragging = ref(false)
 const lastMouseX = ref(0)
 const lastMouseY = ref(0)
 const isCubeDragging = ref(false)
-const isMobile = ref(window.innerWidth <= 768)
 
 // -- Draggable and zoomable logic --
 const offsetX = ref(0)
@@ -497,7 +508,6 @@ const isDragging = ref(false)
 
 const showInvalidDropPopup = ref(false)
 const invalidDropMessage = ref('')
-
 
 function onGridMouseDown(e) {
   // Only start dragging if clicked on an 'empty space' in the grid wrapper
@@ -602,16 +612,6 @@ function onMouseMove(e) {
   lastMouseY.value = e.clientY
 }
 
-function checkCubeDrag(event) {
-  const target = event.target
-  const isCube = target.classList.contains('cube') || 
-                 target.closest('.cube') !== null
-  
-  isCubeDragging.value = isCube
-  console.log('Cube drag state:', isCubeDragging.value)
-  return isCube
-}
-
 function onMouseUp() {
   dragging.value = false
 }
@@ -644,29 +644,6 @@ const canRemoveRowTop = computed(() => gridRows.value > 1 && !hasCubeInRow(0))
 const canRemoveRowBottom = computed(() => gridRows.value > 1 && !hasCubeInRow(gridRows.value - 1))
 const canRemoveColumnLeft = computed(() => gridCols.value > 1 && !hasCubeInCol(0))
 const canRemoveColumnRight = computed(() => gridCols.value > 1 && !hasCubeInCol(gridCols.value - 1))
-
-function onTouchStart(e) {
-  const touch = e.touches[0]
-  lastMouseX.value = touch.clientX
-  lastMouseY.value = touch.clientY
-  dragging.value = true
-}
-
-
-
-function onTouchMove(e) {
-  if (!dragging.value || isCubeDragging.value) return
-  const touch = e.touches[0]
-  translateX.value += touch.clientX - lastMouseX.value
-  translateY.value += touch.clientY - lastMouseY.value
-  lastMouseX.value = touch.clientX
-  lastMouseY.value = touch.clientY
-}
-
-function onTouchEnd() {
-  dragging.value = false
-}
-
 
 // Add/Remove rows
 function addRowTop() {
@@ -735,12 +712,6 @@ function dragStartFromPool(e, cubeType) {
   e.dataTransfer.setData('fromPool', 'true')
 }
 
-function handleDropCancel() {
-  isCubeDragging.value = false
-  console.log('Drop cancelled - cube drag reset')
-}
-
-
 function handleDrop(e, row, col) {
   isCubeDragging.value = false
   const cubeData = JSON.parse(e.dataTransfer.getData('cube') || '{}')
@@ -752,30 +723,33 @@ function handleDrop(e, row, col) {
     dragging.value = false
     isCubeDragging.value = false
     return
-    if (rowIndex < 0 || rowIndex >= grid.value.length ||
-      colIndex < 0 || colIndex >= grid.value[0].length) {
-    invalidDropMessage.value = 'Invalid drop location - outside grid'
-    showInvalidDropPopup.value = true
-    dragging.value = false
-    isCubeDragging.value = false
-    return
-  }
-  if (e.type === 'touchend') {
-    const touch = e.changedTouches[0]
-    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY)
-    const cellElement = dropTarget.closest('.grid-cell')
-    if (!cellElement) return
-    row = parseInt(cellElement.dataset.row)
-    col = parseInt(cellElement.dataset.col)
-    cubeData = JSON.parse(e.dataTransfer.getData('cube') || '{}')
-    fromRow = parseInt(e.dataTransfer.getData('fromRow') || '')
-    fromCol = parseInt(e.dataTransfer.getData('fromCol') || '')
-  } else {
-    cubeData = JSON.parse(e.dataTransfer.getData('cube') || '{}')
-    fromRow = parseInt(e.dataTransfer.getData('fromRow') || '')
-    fromCol = parseInt(e.dataTransfer.getData('fromCol') || '')
-  }
-  const fromPool = e.dataTransfer.getData('fromPool') === 'true'
+    if (
+      rowIndex < 0 ||
+      rowIndex >= grid.value.length ||
+      colIndex < 0 ||
+      colIndex >= grid.value[0].length
+    ) {
+      invalidDropMessage.value = 'Invalid drop location - outside grid'
+      showInvalidDropPopup.value = true
+      dragging.value = false
+      isCubeDragging.value = false
+      return
+    }
+    if (e.type === 'touchend') {
+      const touch = e.changedTouches[0]
+      const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY)
+      const cellElement = dropTarget.closest('.grid-cell')
+      if (!cellElement) return
+      row = parseInt(cellElement.dataset.row)
+      col = parseInt(cellElement.dataset.col)
+      cubeData = JSON.parse(e.dataTransfer.getData('cube') || '{}')
+      fromRow = parseInt(e.dataTransfer.getData('fromRow') || '')
+      fromCol = parseInt(e.dataTransfer.getData('fromCol') || '')
+    } else {
+      cubeData = JSON.parse(e.dataTransfer.getData('cube') || '{}')
+      fromRow = parseInt(e.dataTransfer.getData('fromRow') || '')
+      fromCol = parseInt(e.dataTransfer.getData('fromCol') || '')
+    }
   }
   if (!fromPool && !isNaN(fromRow) && !isNaN(fromCol)) {
     grid.value[fromRow][fromCol] = null
@@ -910,58 +884,26 @@ function exportHighlightedGrid() {
           .join(''),
       )
       .join('')}
-      
+
   </div>
   <div class="grid-wrapper">
-  ${searchResults.value[0] ? 
-    `<div class="path-found">
+  ${
+    searchResults.value[0]
+      ? `<div class="path-found">
       Found: ${searchResults.value[0].name} on Row ${searchResults.value[0].row + 1}
-    </div>` : ''
+    </div>`
+      : ''
   }
   ${searchPath.value.length === 0 ? '<div class="no-path">No path found</div>' : ''}
   <div class="buttons">
     <button class="button" onclick="window.print()">Print</button>
   </div>
 </div>`
-const showDebug = ref(true)
-
-function toggleDebug() {
-}
-  const blob = new Blob([gridHTML], { type: 'text/html' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = 'highlighted_grid.html'
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
 }
 
-function checkInvalidDrop(rowIndex, colIndex) {
-  if (rowIndex < 0 || rowIndex >= grid.value.length ||
-      colIndex < 0 || colIndex >= grid.value[0].length) {
-    console.log('Invalid drop location - outside grid')
-    dragging.value = false
-    isCubeDragging.value = false
-    return true
-  }
-  
-  if (grid.value[rowIndex][colIndex] !== null) {
-    console.log('Invalid drop location - cell already occupied')
-    showOccupiedPopup.value = true
-    dragging.value = false
-    isCubeDragging.value = false
-    return true
-  }
-  
-  return false
-}
 function onDragEnd() {
   isCubeDragging.value = false
 }
-
-
 
 // Delete confirm
 function handleDropToTrash(e) {
@@ -1006,35 +948,13 @@ function downloadJson() {
   showExportConfirm.value = true
 }
 
-const isHighlightedDragging = ref(false)
 const highlightedStartX = ref(0)
 const highlightedStartY = ref(0)
-const highlightedOffsetX = ref(0)
-const highlightedOffsetY = ref(0)
 
-const highlightedTransform = computed(() => ({
-  transform: `translate(${highlightedOffsetX.value}px, ${highlightedOffsetY.value}px)`,
-  cursor: isHighlightedDragging.value ? 'grabbing' : 'grab',
-  userSelect: 'none'
-}))
-
-function startHighlightedDrag(e) {
-  isHighlightedDragging.value = true
-  highlightedStartX.value = e.clientX - highlightedOffsetX.value
-  highlightedStartY.value = e.clientY - highlightedOffsetY.value
-}
-
-function handleHighlightedDrag(e) {
-  if (!isHighlightedDragging.value) return
-  highlightedOffsetX.value = e.clientX - highlightedStartX.value
-  highlightedOffsetY.value = e.clientY - highlightedStartY.value
-}
-
-
-const lastDropData = ref(null)
-
-function stopHighlightedDrag() {
-  isHighlightedDragging.value = false
+function onHighlightedGridMouseMove(e) {
+  if (!isHighlightedGridDragging.value) return
+  highlightedGridX.value = e.clientX - highlightedStartX.value
+  highlightedGridY.value = e.clientY - highlightedStartY.value
 }
 
 function cancelDelete() {
@@ -1184,9 +1104,6 @@ function onFileChange(e) {
 </script>
 
 <style scoped>
-  * {
-    font-size: 105%;
-  }
 :root {
   position: fixed;
   width: 100%;
@@ -1194,7 +1111,6 @@ function onFileChange(e) {
   overflow: hidden;
   overscroll-behavior: none;
 }
-
 
 .app-message {
   background: #ffc107;
@@ -1251,12 +1167,11 @@ function onFileChange(e) {
   text-align: center;
 }
 .grid-viewport {
-  width: 50vw;
+  width: 45vw;
   height: 60vh;
   border: 2px solid #ccc;
   overflow: hidden;
   margin: 0 auto;
-  
 }
 
 .confirm-buttons {
@@ -1316,12 +1231,17 @@ function onFileChange(e) {
 }
 
 /* Top/Bottom row controls */
-.top-row-controls,
-.bottom-row-controls {
+.top-row-controls {
   display: flex;
   gap: 1rem;
   justify-content: center;
   margin: 1rem 0;
+}
+
+.bottom-row-controls {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
 }
 
 .highlighted-grid-buttons {
@@ -1334,9 +1254,10 @@ function onFileChange(e) {
 }
 
 .highlighted-grid-wrapper {
-  background-color: rgb(60, 63, 66); /* Light blue with opacity */
+  background-color: rgb(23, 24, 26);
   transition: background-color 0.3s ease;
   box-shadow: inset 0 0 0 2px rgba(33, 150, 243, 0.5);
+  padding: 1rem;
 }
 
 .highlighted-grid-buttons button {
@@ -1488,6 +1409,8 @@ function onFileChange(e) {
   padding: 0;
   list-style: none;
   width: 100%;
+  overflow-y: auto;
+  max-height: 50vh;
 }
 
 .path-found {
@@ -1523,7 +1446,7 @@ function onFileChange(e) {
 
 @media (max-width: 768px) {
   * {
-    font-size: 120%;
+    font-size: 110%;
   }
   .grid-viewport {
     width: 95vw;
@@ -1632,7 +1555,13 @@ function onFileChange(e) {
 .grocery-item input {
   width: 80px;
 }
-
+.highlighted-grid-container {
+  position: relative;
+  user-select: none;
+  transition: transform 0.1s ease;
+  overflow: hidden;
+  padding-top: 50px;
+}
 .remove-item {
   background-color: #ff4d4d;
   color: rgb(255, 255, 255);
@@ -1764,7 +1693,7 @@ button:hover:not(:disabled) {
   display: grid;
   gap: 5px;
   justify-content: center;
-  align-content: center;    
+  align-content: center;
   margin: 0 auto;
 }
 
@@ -1940,7 +1869,6 @@ button:hover:not(:disabled) {
 
 .highlighted-grid {
   margin-top: 2rem;
-  
 }
 
 .grid-cell.highlighted {
@@ -2113,7 +2041,6 @@ button:hover:not(:disabled) {
   border-radius: 6px;
   border: 1px solid #bdc3c7;
 }
-
 
 .direction-selector button {
   padding: 8px;

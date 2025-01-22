@@ -1,21 +1,59 @@
-# Vue 3 + Vite
+# Grocery Store Map Application
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+## Overview
+This application provides an interactive map interface for managing product locations in a grocery store. It allows store owners or managers to visualize a grid-based layout, add different product sections (cubes), and enable users to quickly search for items by name or UPC code.
 
-While this project uses Vue.js, Vite supports many popular JS frameworks. [See all the supported frameworks](https://vitejs.dev/guide/#scaffolding-your-first-vite-project).
+## Key Features
+- **Grid Layout and Editing:** Add and remove rows/columns, drag items around the grid, and create a custom floor plan of your store.  
+- **Item Search:** Enter a search keyword (e.g., product name or UPC), and see a filtered view of matching items or their locations on the map.  
+- **Modals and Alerts:** Invalid drop zones or confirmation prompts appear in modals, ensuring user-friendly error handling.  
+- **JSON Import/Export:** Save your store layout and product info to a JSON file for backup or load it back later.
 
-## Deploy Your Own
+## How It Works
+1. **Grid Setup:**  
+   - The main grocery map is displayed as a grid. You can add rows and columns to match your store layout.  
+   - Drag-and-drop functionality allows you to place cubes (e.g., "Grocery," "Entry," "Custom," etc.) onto the grid squares.
 
-Deploy your own Vite project with Vercel.
+2. **Cube Types:**  
+   - Each “cube” type represents a specific store section (e.g., produce, dairy, entry points, custom areas, or walls).  
+   - When you drop a cube, you can also input details like item rows or UPCs.  
 
-[![Deploy with Vercel](https://vercel.com/button)]([https://vercel.com/new/clone?repository-url=https://github.com/vercel/examples/tree/main/framework-boilerplates/vite&template=vite](https://vercel.com/new/clone?demo-description=Vite%2FVue.js%20site%20that%20can%20be%20deployed%20to%20Vercel&demo-image=%2F%2Fimages.ctfassets.net%2Fe5382hct74si%2F2T4BUF3mEBKPJF3jcjU6nS%2F0d4a02e7c48091d13814a4ab513e8734%2FScreen_Shot_2022-04-13_at_10.05.56_PM.png&demo-title=Vite%20-%20Vue&demo-url=https%3A%2F%2Fvite-vue-template.vercel.app%2F&from=templates&project-name=Vite%20-%20Vue&repository-name=vite-vue&repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fvercel%2Ftree%2Fmain%2Fexamples%2Fvite&skippable-integrations=1))
+3. **Searching for Products:**  
+   - A search bar is available to quickly find any item.  
+   - Matching results appear in a modal or message, highlighting their location.  
 
-_Live Example: https://vite-vue-template.vercel.app_
+4. **Import/Export:**  
+   - Click “Save” to export your map as a JSON file which includes all row/column info and product placements.  
+   - Click “Load” to import a previously saved JSON map.  
 
-### Deploying From Your Terminal
+5. **Modals and Warnings:**  
+   - If you drop a cube in an invalid spot or exceed certain constraints, a modal will appear with a warning or confirmation step.  
+   - This ensures accuracy in mapping and helps avoid accidental changes.
 
-You can deploy your new Vite project with a single command from your terminal using [Vercel CLI](https://vercel.com/download):
 
-```shell
-$ vercel
-```
+ **Create or Modify Your Map:**  
+   - Use the “+” or “-” buttons to add/remove rows or columns.  
+   - Drag cubes from the “bottom pool” (or whichever designated area) onto the grid.
+
+ **Manage Products:**  
+   - For Grocery cubes, you can edit item names, UPCs, or other details.  
+   - Remove items or entire cubes as your store layout changes.
+
+ **Search:**  
+   - Enter a keyword or UPC into the search bar.  
+   - Press Enter to view matching items in a modal, including quick navigation to their location.
+
+**Import/Export:**  
+   - Click “Save” to download a JSON representation of your entire layout.  
+   - Click “Load” to use a saved store map.
+
+## Technologies Used
+- **Vue 3**:
+- **Vite**:
+
+## How to Deploy yourself
+1. Build the project:
+   ```
+   pnpm run build
+   ```
+2. Deploy the contents of the `dist` folder to your preferred static hosting service.

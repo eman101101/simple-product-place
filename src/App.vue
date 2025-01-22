@@ -106,19 +106,6 @@
       </div>
     </div>
   </div>
-  <div class="debug-panel">
-    <div class="debug-header">
-      Debug Panel
-    </div>
-    <div v-if="!debugCollapsed" class="debug-content">
-      <p>Dragging: {{ dragging }}</p>
-      <p>Cube Dragging: {{ isCubeDragging }}</p>
-      <p>Zoom: {{ zoomFactor }}</p>
-      <p>Grid Position: X:{{ translateX }} Y:{{ translateY }}</p>
-      <p>Selected Cube: {{ selectedCube?.label || 'none' }}</p>
-      <p>Last Mouse: X:{{ lastMouseX }} Y:{{ lastMouseY }}</p>
-    </div>
-  </div>
   <!-- Grid Wrapper -->
   <div class="grid-wrapper">
     <!-- Side Controls Left -->
@@ -1533,6 +1520,9 @@ function onFileChange(e) {
 }
 
 @media (max-width: 768px) {
+  * {
+    font-size: 120%;
+  }
   .grid-viewport {
     width: 95vw;
     height: 60vh;
@@ -1551,14 +1541,6 @@ function onFileChange(e) {
   .right-controls {
     display: flex;
     gap: 0.5rem;
-  }
-
-  .mobile-column-controls button {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    padding: 0;
-    font-size: 1.2rem;
   }
 }
 

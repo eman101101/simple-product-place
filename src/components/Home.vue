@@ -14,7 +14,6 @@
 
   <div class="feature-grid">
 
-
       <h3>Create your store layout with customizable rows and columns. Drag and drop sections like Grocery, Entry, or Custom areas onto the grid.</h3>
    
 

@@ -4,6 +4,11 @@
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, minimal-ui"
   />
   <router-view></router-view>
+  <div :class="[theme + '-theme']">
+    <!-- ...existing code... -->
+    <button @click="toggleTheme">Switch Theme</button>
+    <!-- ...existing code... -->
+
   <div>
     <!-- Invalid Drop Popup -->
     <div v-if="showInvalidDropPopup" class="modal">
@@ -317,6 +322,7 @@
       </div>
     </div>
   </div>
+</div>
 </template>
 
 <script setup>
@@ -360,6 +366,12 @@ const highlightedCube = ref(null)
 const appMessage = ref('')
 const searchPath = ref([]) // store BFS path as array of [row, col]
 const highlightedGrid = ref(null)
+
+const theme = ref('light')
+
+function toggleTheme() {
+  theme.value = theme.value === 'light' ? 'dark' : 'light'
+}
 
 // Search function
 function performSearch() {
@@ -1110,6 +1122,7 @@ function onFileChange(e) {
   height: 100%;
   overflow: hidden;
   overscroll-behavior: none;
+  
 }
 
 .app-message {
@@ -1286,6 +1299,8 @@ function onFileChange(e) {
   transition: background-color 0.2s;
 }
 
+
+
 .direction-buttons button:hover {
   background-color: #f0f0f0;
 }
@@ -1308,6 +1323,63 @@ function onFileChange(e) {
   to {
     opacity: 1;
   }
+}
+.light-theme .grid-wrapper {
+  background-color: #503d3d;
+  border: 2px dashed #ccc;
+}
+.light-theme .import-btn {
+  background-color: #2c3e50;
+  color: #ecf0f1;
+}
+.light-theme .search-input {
+  background-color: #ffffff;
+  color: #333;
+}
+/* Modal styling for light theme */
+.light-theme .modal,
+.light-theme .confirm-overlay {
+  background-color: rgba(255, 255, 255, 0.85);
+  color: #333;
+}
+.light-theme .modal-content,
+.light-theme .confirm-content {
+  background-color: #fdfdfd;
+  color: #333;
+}
+
+.light-theme .highlighted-grid-wrapper {
+  background-color: #646464;
+  border: 2px dashed #dadada;
+}
+
+/* Dark Theme */
+.dark-theme .grid-wrapper {
+  background-color: #2f2f2f;
+  border: 2px dashed #666;
+}
+.dark-theme .import-btn {
+  background-color: #444444;
+  color: #f0f0f0;
+}
+.dark-theme .search-input {
+  background-color: #333333;
+  color: #ddd;
+}
+/* Modal styling for dark theme */
+.dark-theme .modal,
+.dark-theme .confirm-overlay {
+  background-color: rgba(20, 20, 20, 0.85);
+  color: #ddd;
+}
+.dark-theme .modal-content,
+.dark-theme .confirm-content {
+  background-color: #1e1e1e;
+  color: #ddd;
+}
+.dark-theme .highlighted-grid-wrapper {
+  background-color: #2a2a2a;
+  border: 2px dashed #666;
 }
 
 .import-btn {

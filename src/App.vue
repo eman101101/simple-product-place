@@ -1791,6 +1791,9 @@ button:hover:not(:disabled) {
   font-weight: bold;
   overflow: hidden;
   text-align: center;
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10+ */
+  user-select: none; /* Standard syntax */
 }
 
 .cube:hover {

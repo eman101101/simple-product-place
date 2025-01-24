@@ -911,6 +911,15 @@ function exportHighlightedGrid() {
     <button class="button" onclick="window.print()">Print</button>
   </div>
 </div>`
+  const blob = new Blob([gridHTML], { type: 'text/html' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = 'highlighted-grid.html'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
 }
 
 function onDragEnd() {
